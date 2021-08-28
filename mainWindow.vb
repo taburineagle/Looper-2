@@ -9,14 +9,12 @@ Imports System.Runtime.InteropServices
 ' ================= THINGS TO DO =======================================================
 ' ======================================================================================
 ' ----------------- MOST IMPORTANT: -----------------
-' - Figure out some kind of speed offset for setting the IN point, based on the current speed (slower = less offset)
-' - When you save a file, the Clear All button goes away... find out why this is
-' - Write routine to go to the next non-skippable event when going prev/next event - it works for auto-playlisting (because it just skips that
-'   one if it's invalid), but moving that to the prev/next handler would be even better!  Something in the prevNext handler going "if this is
-'   invalid, then go to the next one" should worj
+'
 ' ----------------- THINGS TO LOOK INTO: -----------------
+' - Figure out some kind of speed offset for setting the IN point, based on the current speed (slower = less offset)
 ' - Make "autosave looper" a preference, and also "keep original .looper file" backup stuff
 ' - See if Pinging a server will speed things up for loading a list (so inactive servers won't slow the thing down)
+' - Write a Trimmer sub-window for Looper that lets you trim .looper files down
 
 Public Class mainWindow
     Public newEventString As String = "New Loop Event" ' the name for new events (by default, just "New Loop Event" as it was in older versions of Looper)
@@ -33,6 +31,9 @@ Public Class mainWindow
     Public randomNumberList(0) As Integer ' array of randomized item events
 
     ' INI file values stored for later use
+    Private inPointOffset As Double = 0 ' how much more to add to an IN point to more fine-tune the point
+    Private outPointOffset As Double = 0.15 ' how much more to take off of an OUT point to properly loop it (without skipping to the beginning)
+
     Public loopSlipLength As Double = 0.5 ' how long a loop slips when you click the slip buttons
     Public loopPreviewLength As Double = 0.25 ' how long a loop previews for before going back to the loop
     Public autoPlayDialogs As Boolean = True ' whether to start playing as soon as dialog boxes close (text editing maybe?)
@@ -55,6 +56,8 @@ Public Class mainWindow
 
     Public dockPlaylistWindow As Boolean = False ' whether or not to dock the playlist to the main window (if it's sized differerntly, then no...)
     Public isQuitting As Boolean = False ' if we are in the process of quitting or not
+
+    Dim waitForSecondTick As Integer = -1 ' wait for the 2nd response from MPC-HC to change the speed
 
     Public loadingEvent As Boolean = False ' if we're in the process of loading an event (for the NOWPLAYING function)
     Public loadingEvent_Speed As Integer = 100
@@ -203,7 +206,7 @@ Public Class mainWindow
                                         End If
                                     Else ' if the OUT point has no value set in it, then...
                                         SendMessage(CMD_SEND.CMD_GETNOWPLAYING) ' force updating the NOWPLAYING info to get the duration
-                                        outTF.Text = NumberToTimeString(currentDuration + 0.5 - 0.057) ' set the OUT point to the duration
+                                        outTF.Text = NumberToTimeString(currentDuration + 0.5 - outPointOffset) ' set the OUT point to the duration
                                         playlistWindow.modifyEvent(playlistWindow.currentPlayingEvent) ' and modify the current event to reflect that duration
                                     End If
                                 End If
@@ -211,8 +214,10 @@ Public Class mainWindow
                     Case CType(CMD_RECEIVED.CMD_NOWPLAYING, IntPtr) ' received when MPC-HC gets a request to update the current file + duration info
                         Dim nowInfoArray() As String = Split(theMessage, "|")
 
-                        currentPlayingFile = nowInfoArray(3)
-                        Double.TryParse(nowInfoArray(4), currentDuration)
+                        If currentPlayingFile <> nowInfoArray(UBound(nowInfoArray) - 1) Then ' if the filenames don't match, then change the current information
+                            currentPlayingFile = nowInfoArray(UBound(nowInfoArray) - 1)
+                            Double.TryParse(nowInfoArray(UBound(nowInfoArray)), currentDuration)
+                        End If
 
                         ' if we're loading an event from a file, and it first recieved the NOWPLAYING message, then set the event up NOW
                         If loadingEvent = True Then
@@ -226,7 +231,7 @@ Public Class mainWindow
                             ' if the OUT point is set as "0" or "0:00" - the Cstr() function sets that to 0 - it gets the current duration (this is
                             ' for files that are added to the playlist by dragging and dropping them on to it.)
                             If CStr(TimeStringToNumber(outTF.Text)) = "0" Then
-                                outTF.Text = NumberToTimeString(currentDuration + 0.5 - 0.057)
+                                outTF.Text = NumberToTimeString(currentDuration + 0.5 - outPointOffset)
                                 playlistWindow.modifyEvent(playlistWindow.currentPlayingEvent)
                             End If
 
@@ -241,13 +246,23 @@ Public Class mainWindow
                             loadingEvent_Speed = 100
 
                             playlistWindow.stilLLoading = False
+                        Else ' we're not loading an event
+                            If waitForSecondTick = 0 Then ' if MPC-HC loaded the file, we want to wait for 2 responses from this message before checking speed
+                                waitForSecondTick = 1 ' skip this time around and wait for the next one
+                            ElseIf waitForSecondTick = 1 Then ' OK, we're there, now check the speed
+                                If speedSlider.Value <> 100 Then
+                                    setSpeed(100)
+                                End If
+
+                                waitForSecondTick = -1 ' reset the variable so we're not checking it again (until the next time we need to)
+                            End If
                         End If
 
                         nowInfoArray = Nothing ' unset the variable to clear it from memory
                     Case CType(CMD_RECEIVED.CMD_STATE, IntPtr)
                         If Convert.ToInt32(theMessage) = LOADSTATE.MLS_LOADED Then ' received when MPC-HC "finishes" loading a file
                             If clearINOUTPoint = True Then ' re-initialize everything to defaults
-                                setSpeed(100)
+                                If loadingEvent = False Then waitForSecondTick = 0 ' check the speed to see if we need to change it... the next time around
                                 clearInPoint()
                                 clearOutPoint()
                             Else
@@ -369,6 +384,26 @@ Public Class mainWindow
         playlistWindow.saveLastPlayedFile() ' save the last played .looper and event to the INI file
     End Sub
 
+    Private Sub loadOptionsWindowButton_MouseEnter(sender As Object, e As EventArgs) Handles loadOptionsWindowButton.MouseEnter
+        loadOptionsWindowButton.BackgroundImage = My.Resources.Gear_42px_Blue
+    End Sub
+
+    Private Sub loadOptionsWindowButton_MouseLeave(sender As Object, e As EventArgs) Handles loadOptionsWindowButton.MouseLeave
+        loadOptionsWindowButton.BackgroundImage = My.Resources.Gear_42px_Grey
+    End Sub
+
+    Private Sub showPlayingFileInExplorerButton_MouseEnter(sender As Object, e As EventArgs) Handles showPlayingFileInExplorerButton.MouseEnter
+        showPlayingFileInExplorerButton.BackgroundImage = My.Resources.Folder_42px_Blue
+    End Sub
+
+    Private Sub showPlayingFileInExplorerButton_MouseLeave(sender As Object, e As EventArgs) Handles showPlayingFileInExplorerButton.MouseLeave
+        showPlayingFileInExplorerButton.BackgroundImage = My.Resources.Folder_42px_Grey
+    End Sub
+
+    Private Sub mainWindow_Resize(sender As Object, e As EventArgs) Handles MyBase.Resize
+        playlistWindow.WindowState = Me.WindowState ' minimize or show the Playlist window if the main window is minimized/restored
+    End Sub
+
     ' ======================================================================================
     ' ================= THREADS ============================================================
     ' ======================================================================================
@@ -381,8 +416,8 @@ Public Class mainWindow
                 End If
 
                 System.Threading.Thread.Sleep(30)
-                Else ' we're quitting, so don't get the current position at this time
-                    System.Threading.Thread.Sleep(100) ' wait a little bit longer during the thread to see if we cancel quit
+            Else ' we're quitting, so don't get the current position at this time
+                System.Threading.Thread.Sleep(100) ' wait a little bit longer during the thread to see if we cancel quit
             End If
         End While
     End Sub
@@ -461,6 +496,9 @@ Public Class mainWindow
         ' INI values that need to be stored in variables for later use
         Double.TryParse(betweenTheLines(fileReader, "loopPreviewLength=", vbCrLf, "0.25"), loopPreviewLength)
         Double.TryParse(betweenTheLines(fileReader, "loopSlipLength=", vbCrLf, "0.50"), loopSlipLength)
+
+        Double.TryParse(betweenTheLines(fileReader, "inPointOffset=", vbCrLf, "0"), inPointOffset)
+        Double.TryParse(betweenTheLines(fileReader, "outPointOffset=", vbCrLf, "0.15"), outPointOffset)
 
         ' TODO: Write a "disable hotkeys" preference
         Boolean.TryParse(betweenTheLines(fileReader, "disableHotkeys=", vbCrLf, "B_False"), disableHotkeys)
@@ -581,7 +619,7 @@ Public Class mainWindow
 
             If hotKeyID = -1 Or hotKeyID = 125 Then RegisterHotKey(Me.Handle, 125, KeyModifier.Control, Asc("T"))  ' change always on top setting
             If hotKeyID = -1 Or hotKeyID = 126 Then RegisterHotKey(Me.Handle, 126, KeyModifier.Control, Asc("Q"))  ' quit MPC-HC Looper
-            If hotKeyID = -1 Or hotKeyID = 127 Then RegisterHotKey(Me.Handle, 127, KeyModifier.Control, Keys.OemPeriod)  ' load options pane
+            If hotKeyID = -1 Or hotKeyID = 127 Then RegisterHotKey(Me.Handle, 127, KeyModifier.Control, Keys.Oemcomma)  ' load options pane
             If hotKeyID = -1 Or hotKeyID = 128 Then RegisterHotKey(Me.Handle, 128, KeyModifier.Alt, Keys.Home)  ' open path to file in Explorer
 
             ' Working with events
@@ -682,21 +720,21 @@ Public Class mainWindow
                 If getMode() Then clearOutPoint()
 
             Case 110 ' trim the IN point left
-                If getMode() Then slipInLeft()
+                If getMode() Then slipPoint(1)
             Case 111 ' trim the IN point left by the default value
-                If getMode() Then slipInLeft(0.05)
+                If getMode() Then slipPoint(1, 0.05)
             Case 112 ' trim the IN point right
-                If getMode() Then slipInRight()
+                If getMode() Then slipPoint(2)
             Case 113 ' trim the IN point right by the default value
-                If getMode() Then slipInRight(0.05)
+                If getMode() Then slipPoint(2, 0.05)
             Case 114 ' trim the OUT point left
-                If getMode() Then slipOutLeft()
+                If getMode() Then slipPoint(3)
             Case 115 ' trim the OUT point left by the default value
-                If getMode() Then slipOutLeft(0.05)
+                If getMode() Then slipPoint(3, 0.05)
             Case 116 ' trim the OUT point right
-                If getMode() Then slipOutRight()
+                If getMode() Then slipPoint(4)
             Case 117 ' trim the OUT point right by the default value
-                If getMode() Then slipOutRight(0.05)
+                If getMode() Then slipPoint(4, 0.05)
 
             Case 120 ' change loop mode
                 switchLoopMode()
@@ -745,15 +783,23 @@ Public Class mainWindow
 
             Case 141 ' Select ALL the events in the events list
                 If playlistWindow.eventsList.Items.Count > 0 Then
+                    playlistWindow.eventsList.BeginUpdate()
+
                     For a As Integer = 0 To playlistWindow.eventsList.Items.Count - 1
                         playlistWindow.eventsList.Items(a).Selected = True
                     Next
+
+                    playlistWindow.eventsList.EndUpdate()
                 End If
             Case 142 ' Select NONE of the events in the events list
                 If playlistWindow.eventsList.Items.Count > 0 Then
+                    playlistWindow.eventsList.BeginUpdate()
+
                     For a As Integer = 0 To playlistWindow.eventsList.Items.Count - 1
                         playlistWindow.eventsList.Items(a).Selected = False
                     Next
+
+                    playlistWindow.eventsList.EndUpdate()
                 End If
         End Select
     End Sub
@@ -985,19 +1031,19 @@ Public Class mainWindow
     ' ======================================================================================
 
     Private Sub inPointSlipLeftButton_Click(sender As Object, e As EventArgs) Handles inPointSlipLeftButton.Click
-        slipInLeft()
+        slipPoint(1)
     End Sub
 
     Private Sub inPointSlipRightButton_Click(sender As Object, e As EventArgs) Handles inPointSlipRightButton.Click
-        slipInRight()
+        slipPoint(2)
     End Sub
 
     Private Sub outPointSlipLeftButton_Click(sender As Object, e As EventArgs) Handles outPointSlipLeftButton.Click
-        slipOutLeft()
+        slipPoint(3)
     End Sub
 
     Private Sub outPointSlipRightButton_Click(sender As Object, e As EventArgs) Handles outPointSlipRightButton.Click
-        slipOutRight()
+        slipPoint(4)
     End Sub
 
     Private Sub inPointSlipLeftButton_MouseDown(sender As Object, e As MouseEventArgs) Handles inPointSlipLeftButton.MouseDown
@@ -1028,7 +1074,7 @@ Public Class mainWindow
     End Sub
 
     Private Sub outPointSlipRightButton_MouseDown(sender As Object, e As MouseEventArgs) Handles outPointSlipRightButton.MouseDown
-        slipAction = 4 ' ' we're slipping the OUT point right
+        slipAction = 4 ' we're slipping the OUT point right
         slipTimer.Start()
     End Sub
 
@@ -1037,15 +1083,7 @@ Public Class mainWindow
     End Sub
 
     Private Sub slipTimer_Tick(sender As Object, e As EventArgs) Handles slipTimer.Tick
-        If slipAction = 1 Then
-            slipInLeft()
-        ElseIf slipAction = 2 Then
-            slipInRight()
-        ElseIf slipAction = 3 Then
-            slipOutLeft()
-        ElseIf slipAction = 4 Then
-            slipOutRight()
-        End If
+        slipPoint(slipAction) ' slip the specified point
     End Sub
 
     ' ======================================================================================
@@ -1054,7 +1092,11 @@ Public Class mainWindow
 
     Public Sub setInPoint()
         SendMessage(CMD_SEND.CMD_GETCURRENTPOSITION)
-        inTF.Text = NumberToTimeString(currentPosition - 0.25)
+        inTF.Text = NumberToTimeString(currentPosition - 0.25 + inPointOffset)
+
+        If TimeStringToNumber(inTF.Text) > TimeStringToNumber(outTF.Text) Then
+            clearOutPoint()
+        End If
 
         playlistWindow.checkAgainstCurrentPlayingEvent() ' check to see if the IN and OUT points match the currently playing event (for highlight)
     End Sub
@@ -1074,57 +1116,34 @@ Public Class mainWindow
 
     Public Sub clearOutPoint()
         SendMessage(CMD_SEND.CMD_GETNOWPLAYING)
-        outTF.Text = NumberToTimeString(currentDuration + 0.5 - 0.057)
+        outTF.Text = NumberToTimeString(currentDuration + 0.5 - outPointOffset)
 
         playlistWindow.checkAgainstCurrentPlayingEvent() ' check to see if the IN and OUT points match the currently playing event (for highlight)
     End Sub
 
-    Private Sub slipInLeft(Optional slipAmount As Double = -1)
-        If slipAmount = -1 Then
-            slipAmount = loopSlipLength
+    Private Sub slipPoint(ByVal thePoint As Integer, Optional slipAmount As Double = -1)
+        If slipAmount = -1 Then slipAmount = loopSlipLength ' set the slipping amount to your preset if we're not slipping by a specific number
+        Dim newPoint As Double ' the new point after slipping
+
+        Select Case thePoint
+            Case 1 ' we're slipping the IN point back
+                newPoint = TimeStringToNumber(inTF.Text) - slipAmount
+                If newPoint < 0 Then newPoint = 0 ' if the resulting IN point is less than zero, then just set the IN to 0
+            Case 2 ' we're slipping the IN point forwards
+                newPoint = TimeStringToNumber(inTF.Text) + slipAmount
+            Case 3 ' we're slipping the OUT point back
+                newPoint = TimeStringToNumber(outTF.Text) - slipAmount
+            Case 4 ' we're slipping the OUT point forwards
+                newPoint = TimeStringToNumber(outTF.Text) + slipAmount
+        End Select
+
+        If thePoint < 3 Then ' we're slipping the IN point, so we don't need to do a preview slip-back
+            inTF.Text = NumberToTimeString(newPoint)
+            SendMessage(CMD_SEND.CMD_SETPOSITION, CStr((newPoint - 0.5)))
+        Else ' we're slipping the OUT point, so do the slip-back
+            outTF.Text = NumberToTimeString(newPoint)
+            SendMessage(CMD_SEND.CMD_SETPOSITION, CStr((newPoint - 0.5 - loopPreviewLength)))
         End If
-
-        Dim newInPoint As Double = TimeStringToNumber(inTF.Text) - slipAmount
-
-        If newInPoint < 0 Then
-            newInPoint = 0.5
-        End If
-
-        inTF.Text = NumberToTimeString(newInPoint)
-        SendMessage(CMD_SEND.CMD_SETPOSITION, CStr(TimeStringToNumber(inTF.Text) - 0.5))
-
-        playlistWindow.checkAgainstCurrentPlayingEvent() ' check to see if the IN and OUT points match the currently playing event (for highlight)
-    End Sub
-
-    Private Sub slipInRight(Optional slipAmount As Double = -1)
-        If slipAmount = -1 Then
-            slipAmount = loopSlipLength
-        End If
-
-        inTF.Text = NumberToTimeString(TimeStringToNumber(inTF.Text) + slipAmount)
-        SendMessage(CMD_SEND.CMD_SETPOSITION, CStr(TimeStringToNumber(inTF.Text) - 0.5))
-
-        playlistWindow.checkAgainstCurrentPlayingEvent() ' check to see if the IN and OUT points match the currently playing event (for highlight)
-    End Sub
-
-    Private Sub slipOutLeft(Optional slipAmount As Double = -1)
-        If slipAmount = -1 Then
-            slipAmount = loopSlipLength
-        End If
-
-        outTF.Text = NumberToTimeString(TimeStringToNumber(outTF.Text) - slipAmount)
-        SendMessage(CMD_SEND.CMD_SETPOSITION, CStr(TimeStringToNumber(outTF.Text) - 0.5 - (loopPreviewLength / 2)))
-
-        playlistWindow.checkAgainstCurrentPlayingEvent() ' check to see if the IN and OUT points match the currently playing event (for highlight)
-    End Sub
-
-    Private Sub slipOutRight(Optional slipAmount As Double = -1)
-        If slipAmount = -1 Then
-            slipAmount = loopSlipLength
-        End If
-
-        outTF.Text = NumberToTimeString(TimeStringToNumber(outTF.Text) + slipAmount)
-        SendMessage(CMD_SEND.CMD_SETPOSITION, CStr(TimeStringToNumber(outTF.Text) - 0.5 - (loopPreviewLength / 2)))
 
         playlistWindow.checkAgainstCurrentPlayingEvent() ' check to see if the IN and OUT points match the currently playing event (for highlight)
     End Sub
@@ -1222,22 +1241,6 @@ Public Class mainWindow
 
     Private Sub speed150Button_Click(sender As Object, e As EventArgs) Handles speed150Button.Click
         setSpeed(150)
-    End Sub
-
-    Private Sub loadOptionsWindowButton_MouseEnter(sender As Object, e As EventArgs) Handles loadOptionsWindowButton.MouseEnter
-        loadOptionsWindowButton.BackgroundImage = My.Resources.Gear_42px_Blue
-    End Sub
-
-    Private Sub loadOptionsWindowButton_MouseLeave(sender As Object, e As EventArgs) Handles loadOptionsWindowButton.MouseLeave
-        loadOptionsWindowButton.BackgroundImage = My.Resources.Gear_42px_Grey
-    End Sub
-
-    Private Sub showPlayingFileInExplorerButton_MouseEnter(sender As Object, e As EventArgs) Handles showPlayingFileInExplorerButton.MouseEnter
-        showPlayingFileInExplorerButton.BackgroundImage = My.Resources.Folder_42px_Blue
-    End Sub
-
-    Private Sub showPlayingFileInExplorerButton_MouseLeave(sender As Object, e As EventArgs) Handles showPlayingFileInExplorerButton.MouseLeave
-        showPlayingFileInExplorerButton.BackgroundImage = My.Resources.Folder_42px_Grey
     End Sub
 
     Private Sub speed175Button_Click(sender As Object, e As EventArgs) Handles speed175Button.Click

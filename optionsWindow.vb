@@ -2,6 +2,8 @@
     '================== Options not settable by the Options pane, but need to be saved ==================
     Dim options_MPCEXE As String ' this option is not settable from the Options pane, but we need to carry it into the new INI file
     Dim options_autoloadLastLooper As String ' the last looper file to load (this gets set when we quit the program)
+    Dim options_inPointOffset As String ' how much more to add to an IN point to more fine-tune the point
+    Dim options_outPointOffset As String ' how much more to take off of an OUT point to properly loop it (without skipping to the beginning)
     '================== Legacy options carried over from the old Looper ==================
     Dim options_dockMode As String ' this option as well is not settable (at least not yet), but carry it into the new file for legacy support
     Dim options_startPositionW, options_startPositionH As String ' the width and height of Looper (which can't be set in this version, as the control panel is always the same size)
@@ -35,6 +37,9 @@
 
             '================== Load the [System] section ==================
             options_MPCEXE = betweenTheLines(fileReader, "MPCEXE=", vbCrLf, "0") ' the path to MPC-HC
+
+            options_inPointOffset = betweenTheLines(fileReader, "inPointOffset=", vbCrLf, "-1") ' how much more to add to an IN point to more fine-tune the point
+            options_outPointOffset = betweenTheLines(fileReader, "outPointOffset=", vbCrLf, "-1") ' how much more to take off of an OUT point to properly loop it (without skipping to the beginning)
             '================== Load the [StartPos] section ==================
             Dim options_startPositionL As String = betweenTheLines(fileReader, "startPositionL=", vbCrLf, "-1") ' the left-most coordinate to open Looper at
             Dim options_startPLPositionL As String = betweenTheLines(fileReader, "startPLPositionL=", vbCrLf, "-1") ' the left-most coordinate to open Looper's playlist at
@@ -82,8 +87,9 @@
 
         '================== Make the [Prefs] section of the INI ==================
         If savePreviewTimeCB.Checked Or saveSlipTimeCB.Checked Or saveCurrentLoopButtonCB.Checked Or saveAOTCB.Checked Or
-        forcePauseCB.Checked Or keepModeCB.Checked Or disableTTCB.Checked Or autoloadCB.Checked Or allowMICB.Checked Or disableAutoPlayCB.Checked Or
-        disableAutoPlayOnLoadCB.Checked Or hidePlaylistWndCB.Checked Or saveNewNameCB.Checked Then
+        forcePauseCB.Checked Or keepModeCB.Checked Or disableTTCB.Checked Or autoloadCB.Checked Or allowMICB.Checked Or
+        disableAutoPlayCB.Checked Or disableAutoPlayOnLoadCB.Checked Or hidePlaylistWndCB.Checked Or
+        saveNewNameCB.Checked Or options_MPCConfirm <> "-1" Or options_dockMode <> "-1" Then
             writingString = "[Prefs]" & vbCrLf ' write the [Prefs] header of the INI file
         End If
 
@@ -155,6 +161,9 @@
 
         '================== Make the [System] section of the INI ==================
         writingString = writingString & "[System]" & vbCrLf & "MPCEXE=" & options_MPCEXE & vbCrLf
+
+        If options_inPointOffset <> "-1" Then writingString = writingString & "inPointOffset=" & options_inPointOffset & vbCrLf
+        If options_outPointOffset <> "-1" Then writingString = writingString & "outPointOffset=" & options_outPointOffset & vbCrLf
 
         '================== Make the [StartPos] section of the INI ==================
         If saveLooperWndPosCB.Checked Then

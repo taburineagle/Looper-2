@@ -283,7 +283,6 @@
                 Next
 
                 fileReader = Nothing ' un-initialize the variable
-                eventListArray = Nothing ' un-initialize the variable
 
                 If clearEventList = True Then ' if we're regularly loading a file, then do these things
                     If mainWindow.autoplayFirstEvent = True Then
@@ -304,6 +303,23 @@
                         End If
                     End If
 
+                    Dim totalEventsToCheck As Integer ' the total number of events the .looper file specified
+
+                    If eventListArray(eventListArray.Length - 1) = "" Then
+                        totalEventsToCheck = eventListArray.Length - 1 ' if the last item in the looper file is "", then subtract that from the events check
+                    Else
+                        totalEventsToCheck = eventListArray.Length ' otherwise, the events check is correct
+                    End If
+
+                    If eventsList.Items.Count <> totalEventsToCheck Then ' we have less items in the events list than we did in the .looper file, so something's wrong
+                        MessageBox.Show((totalEventsToCheck - eventsList.Items.Count) & " event(s) stored in this .looper file have file paths that aren't defined (blank), so those events weren't added to the playlist.",
+                                             "Warning!",
+                                             MessageBoxButtons.OK,
+                                             MessageBoxIcon.Warning,
+                                             MessageBoxDefaultButton.Button1,
+                                             MessageBoxOptions.DefaultDesktopOnly)
+                    End If
+
                     clearEventsButton.Enabled = True
                 Else ' else, if we're merging .looper files, do these things...
                     If Not mainWindow.getMode() Then ' we're in Shuffle or Playlist modes
@@ -317,6 +333,7 @@
                     If mainWindow.autoPlayDialogs = True Then mainWindow.SendMessage(CMD_SEND.CMD_PLAY) ' we merged a .looper into the list, so start playing again
                 End If
 
+                eventListArray = Nothing ' un-initialize the variable
                 tallyTotalList() ' calculate the time of all events in the events list
             Else
                 If mainWindow.autoPlayDialogs = True Then mainWindow.SendMessage(CMD_SEND.CMD_PLAY) ' we cancelled loading, so start playing again
@@ -409,6 +426,10 @@
     End Function
 
     Public Function saveLooperFile(Optional saveSubset As Boolean = False) As Integer
+        If saveSubset = False And isModified = False Then
+            Return DialogResult.Cancel ' if we're not modified, and we're saving the entire file, quit out (as there's nothing to save)
+        End If
+
         Dim checkOverwrite As Integer = DialogResult.Ignore
 
         If eventsList.Items.Count > 0 Then ' if we have nothing in the playlist, there's no reason to save it~!
@@ -624,38 +645,43 @@
 
     Private Sub addEvent(ByVal eventName As String, ByVal eventINPoint As String, ByVal eventOutPoint As String,
                               ByVal eventFilePath As String, Optional newEventCount As Integer = 0)
-        ' Color the incoming .looper file as different colors based on file availability
-        Dim fileExists As String = checkAlternateFileExists(eventFilePath)
-        Dim newEventColor As Color
 
-        If fileExists = "Not Found" Then ' The file does *not* exist at all, so color this row red
-            newEventColor = errorColor
-        ElseIf fileExists = eventFilePath Then ' The file exists at the exact location the .looper file said it would, and we are green for GO
-            newEventColor = foundColor
-        Else ' The file exists in an alternate path (the path of the .looper file), so color this row blue
-            newEventColor = relativeColor
-            eventFilePath = fileExists
-        End If
+        ' if the eventFilePath returned from the Looper file has nothing in it, we can't check to see if the file exists
+        ' so we have to skip adding this event
+        If eventFilePath <> Nothing Then
+            ' Color the incoming .looper file as different colors based on file availability
+            Dim fileExists As String = checkAlternateFileExists(eventFilePath)
+            Dim newEventColor As Color
 
-        Dim newEvent As ListViewItem = returnListViewItem(removeParams(eventName), betweenTheLines(eventName, "<S:", ">", "100"),
-                                                          betweenTheLines(eventName, "<L:", ">", "1"), eventINPoint, eventOutPoint,
-                                                          eventFilePath)
+            If fileExists = "Not Found" Then ' The file does *not* exist at all, so color this row red
+                newEventColor = errorColor
+            ElseIf fileExists = eventFilePath Then ' The file exists at the exact location the .looper file said it would, and we are green for GO
+                newEventColor = foundColor
+            Else ' The file exists in an alternate path (the path of the .looper file), so color this row blue
+                newEventColor = relativeColor
+                eventFilePath = fileExists
+            End If
 
-        If insertItem = True Then
-            If eventsList.SelectedItems.Count > 0 Then ' if something is actually selected
-                Dim newIndex = eventsList.SelectedItems.Item(eventsList.SelectedItems.Count - 1).Index + 1 + newEventCount
-                eventsList.Items.Insert(newIndex, newEvent) ' add the item into the playlist instead of the end
-                eventsList.Items(newIndex).BackColor = newEventColor
-            Else ' if nothing is selected, then just add them as you normally would
+            Dim newEvent As ListViewItem = returnListViewItem(removeParams(eventName), betweenTheLines(eventName, "<S:", ">", "100"),
+                                                              betweenTheLines(eventName, "<L:", ">", "1"), eventINPoint, eventOutPoint,
+                                                              eventFilePath)
+
+            If insertItem = True Then
+                If eventsList.SelectedItems.Count > 0 Then ' if something is actually selected
+                    Dim newIndex = eventsList.SelectedItems.Item(eventsList.SelectedItems.Count - 1).Index + 1 + newEventCount
+                    eventsList.Items.Insert(newIndex, newEvent) ' add the item into the playlist instead of the end
+                    eventsList.Items(newIndex).BackColor = newEventColor
+                Else ' if nothing is selected, then just add them as you normally would
+                    eventsList.Items.Add(newEvent)
+                    eventsList.Items(eventsList.Items.Count - 1).BackColor = newEventColor
+                End If
+            Else ' if nothing is selected, and "inserting" is turned off, then just add them to the end of the list
                 eventsList.Items.Add(newEvent)
                 eventsList.Items(eventsList.Items.Count - 1).BackColor = newEventColor
             End If
-        Else ' if nothing is selected, and "inserting" is turned off, then just add them to the end of the list
-            eventsList.Items.Add(newEvent)
-            eventsList.Items(eventsList.Items.Count - 1).BackColor = newEventColor
         End If
 
-        totalNumberOfEvents += 1 ' increment the total number of events counter (to add one at the end)        
+        totalNumberOfEvents += 1 ' increment the total number of events counter (to add one at the end)
     End Sub
 
     Public Sub addEvent()

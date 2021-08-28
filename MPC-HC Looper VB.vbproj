@@ -243,4 +243,7 @@
   <PropertyGroup>
     <PreBuildEvent>powershell -Command "((Get-Date -Format \"MM-dd-yy.HHmmss\").ToString()) | Out-File '$(ProjectDir)Resources\BuildDate.txt'"</PreBuildEvent>
   </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>C:\Users\zachg\source\repos\Extras\PostCompile.bat</PostBuildEvent>
+  </PropertyGroup>
 </Project>
