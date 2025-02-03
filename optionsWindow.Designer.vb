@@ -51,13 +51,16 @@ Partial Class optionsWindow
         Me.savePLWindowSizeCB = New System.Windows.Forms.CheckBox()
         Me.openingFilesLabel = New System.Windows.Forms.Label()
         Me.showINIFileButton = New System.Windows.Forms.Button()
+        Me.currentVersionLabel = New System.Windows.Forms.Label()
+        Me.currentVersionTF = New System.Windows.Forms.Label()
+        Me.disableHK = New System.Windows.Forms.CheckBox()
         Me.SuspendLayout()
         '
         'previewTimeLabel
         '
         Me.previewTimeLabel.AutoSize = True
         Me.previewTimeLabel.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.previewTimeLabel.Location = New System.Drawing.Point(8, 11)
+        Me.previewTimeLabel.Location = New System.Drawing.Point(7, 34)
         Me.previewTimeLabel.Name = "previewTimeLabel"
         Me.previewTimeLabel.Size = New System.Drawing.Size(171, 17)
         Me.previewTimeLabel.TabIndex = 0
@@ -66,7 +69,7 @@ Partial Class optionsWindow
         'previewTimeTF
         '
         Me.previewTimeTF.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.previewTimeTF.Location = New System.Drawing.Point(11, 31)
+        Me.previewTimeTF.Location = New System.Drawing.Point(10, 52)
         Me.previewTimeTF.Name = "previewTimeTF"
         Me.previewTimeTF.Size = New System.Drawing.Size(188, 25)
         Me.previewTimeTF.TabIndex = 1
@@ -75,17 +78,17 @@ Partial Class optionsWindow
         'slipAmountTF
         '
         Me.slipAmountTF.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.slipAmountTF.Location = New System.Drawing.Point(209, 31)
+        Me.slipAmountTF.Location = New System.Drawing.Point(208, 52)
         Me.slipAmountTF.Name = "slipAmountTF"
         Me.slipAmountTF.Size = New System.Drawing.Size(182, 25)
-        Me.slipAmountTF.TabIndex = 3
+        Me.slipAmountTF.TabIndex = 2
         Me.slipAmountTF.Text = "1"
         '
         'slipAmountLabel
         '
         Me.slipAmountLabel.AutoSize = True
         Me.slipAmountLabel.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.slipAmountLabel.Location = New System.Drawing.Point(206, 11)
+        Me.slipAmountLabel.Location = New System.Drawing.Point(205, 34)
         Me.slipAmountLabel.Name = "slipAmountLabel"
         Me.slipAmountLabel.Size = New System.Drawing.Size(165, 17)
         Me.slipAmountLabel.TabIndex = 2
@@ -95,10 +98,10 @@ Partial Class optionsWindow
         '
         Me.savePreviewTimeCB.AutoSize = True
         Me.savePreviewTimeCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.savePreviewTimeCB.Location = New System.Drawing.Point(11, 60)
+        Me.savePreviewTimeCB.Location = New System.Drawing.Point(10, 80)
         Me.savePreviewTimeCB.Name = "savePreviewTimeCB"
         Me.savePreviewTimeCB.Size = New System.Drawing.Size(183, 21)
-        Me.savePreviewTimeCB.TabIndex = 4
+        Me.savePreviewTimeCB.TabIndex = 3
         Me.savePreviewTimeCB.Text = "Save this setting as Default"
         Me.savePreviewTimeCB.UseVisualStyleBackColor = True
         '
@@ -106,10 +109,10 @@ Partial Class optionsWindow
         '
         Me.saveSlipTimeCB.AutoSize = True
         Me.saveSlipTimeCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.saveSlipTimeCB.Location = New System.Drawing.Point(209, 60)
+        Me.saveSlipTimeCB.Location = New System.Drawing.Point(208, 80)
         Me.saveSlipTimeCB.Name = "saveSlipTimeCB"
         Me.saveSlipTimeCB.Size = New System.Drawing.Size(183, 21)
-        Me.saveSlipTimeCB.TabIndex = 5
+        Me.saveSlipTimeCB.TabIndex = 4
         Me.saveSlipTimeCB.Text = "Save this setting as Default"
         Me.saveSlipTimeCB.UseVisualStyleBackColor = True
         '
@@ -117,10 +120,10 @@ Partial Class optionsWindow
         '
         Me.saveLooperWndPosCB.AutoSize = True
         Me.saveLooperWndPosCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.saveLooperWndPosCB.Location = New System.Drawing.Point(14, 282)
+        Me.saveLooperWndPosCB.Location = New System.Drawing.Point(13, 307)
         Me.saveLooperWndPosCB.Name = "saveLooperWndPosCB"
         Me.saveLooperWndPosCB.Size = New System.Drawing.Size(339, 21)
-        Me.saveLooperWndPosCB.TabIndex = 6
+        Me.saveLooperWndPosCB.TabIndex = 10
         Me.saveLooperWndPosCB.Text = "Save current Looper Control Panel position as default"
         Me.saveLooperWndPosCB.UseVisualStyleBackColor = True
         '
@@ -128,10 +131,10 @@ Partial Class optionsWindow
         '
         Me.saveCurrentLoopButtonCB.AutoSize = True
         Me.saveCurrentLoopButtonCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.saveCurrentLoopButtonCB.Location = New System.Drawing.Point(14, 263)
+        Me.saveCurrentLoopButtonCB.Location = New System.Drawing.Point(13, 287)
         Me.saveCurrentLoopButtonCB.Name = "saveCurrentLoopButtonCB"
         Me.saveCurrentLoopButtonCB.Size = New System.Drawing.Size(318, 21)
-        Me.saveCurrentLoopButtonCB.TabIndex = 7
+        Me.saveCurrentLoopButtonCB.TabIndex = 9
         Me.saveCurrentLoopButtonCB.Text = "Save current Loop Mode button setting as default"
         Me.saveCurrentLoopButtonCB.UseVisualStyleBackColor = True
         '
@@ -139,7 +142,7 @@ Partial Class optionsWindow
         '
         Me.saveAOTCB.AutoSize = True
         Me.saveAOTCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.saveAOTCB.Location = New System.Drawing.Point(14, 244)
+        Me.saveAOTCB.Location = New System.Drawing.Point(13, 267)
         Me.saveAOTCB.Name = "saveAOTCB"
         Me.saveAOTCB.Size = New System.Drawing.Size(291, 21)
         Me.saveAOTCB.TabIndex = 8
@@ -150,10 +153,10 @@ Partial Class optionsWindow
         '
         Me.hidePlaylistWndCB.AutoSize = True
         Me.hidePlaylistWndCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.hidePlaylistWndCB.Location = New System.Drawing.Point(14, 225)
+        Me.hidePlaylistWndCB.Location = New System.Drawing.Point(13, 247)
         Me.hidePlaylistWndCB.Name = "hidePlaylistWndCB"
         Me.hidePlaylistWndCB.Size = New System.Drawing.Size(238, 21)
-        Me.hidePlaylistWndCB.TabIndex = 9
+        Me.hidePlaylistWndCB.TabIndex = 7
         Me.hidePlaylistWndCB.Text = "Hide Playlist window when launching"
         Me.hidePlaylistWndCB.UseVisualStyleBackColor = True
         '
@@ -161,7 +164,7 @@ Partial Class optionsWindow
         '
         Me.defaultTextLabel.AutoSize = True
         Me.defaultTextLabel.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.defaultTextLabel.Location = New System.Drawing.Point(8, 166)
+        Me.defaultTextLabel.Location = New System.Drawing.Point(7, 188)
         Me.defaultTextLabel.Name = "defaultTextLabel"
         Me.defaultTextLabel.Size = New System.Drawing.Size(261, 17)
         Me.defaultTextLabel.TabIndex = 10
@@ -171,7 +174,7 @@ Partial Class optionsWindow
         '
         Me.defaultTextLabel2.AutoSize = True
         Me.defaultTextLabel2.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.defaultTextLabel2.Location = New System.Drawing.Point(9, 186)
+        Me.defaultTextLabel2.Location = New System.Drawing.Point(8, 208)
         Me.defaultTextLabel2.Name = "defaultTextLabel2"
         Me.defaultTextLabel2.Size = New System.Drawing.Size(373, 17)
         Me.defaultTextLabel2.TabIndex = 11
@@ -181,7 +184,7 @@ Partial Class optionsWindow
         '
         Me.defaultTextLabel3.AutoSize = True
         Me.defaultTextLabel3.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.defaultTextLabel3.Location = New System.Drawing.Point(9, 204)
+        Me.defaultTextLabel3.Location = New System.Drawing.Point(8, 226)
         Me.defaultTextLabel3.Name = "defaultTextLabel3"
         Me.defaultTextLabel3.Size = New System.Drawing.Size(364, 17)
         Me.defaultTextLabel3.TabIndex = 12
@@ -191,7 +194,7 @@ Partial Class optionsWindow
         '
         Me.extraSettingsLabel.AutoSize = True
         Me.extraSettingsLabel.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.extraSettingsLabel.Location = New System.Drawing.Point(8, 326)
+        Me.extraSettingsLabel.Location = New System.Drawing.Point(7, 352)
         Me.extraSettingsLabel.Name = "extraSettingsLabel"
         Me.extraSettingsLabel.Size = New System.Drawing.Size(140, 17)
         Me.extraSettingsLabel.TabIndex = 13
@@ -201,10 +204,10 @@ Partial Class optionsWindow
         '
         Me.keepModeCB.AutoSize = True
         Me.keepModeCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.keepModeCB.Location = New System.Drawing.Point(14, 469)
+        Me.keepModeCB.Location = New System.Drawing.Point(13, 519)
         Me.keepModeCB.Name = "keepModeCB"
         Me.keepModeCB.Size = New System.Drawing.Size(345, 21)
-        Me.keepModeCB.TabIndex = 14
+        Me.keepModeCB.TabIndex = 18
         Me.keepModeCB.Text = "Keep the current mode setting when opening new files"
         Me.keepModeCB.UseVisualStyleBackColor = True
         '
@@ -212,10 +215,10 @@ Partial Class optionsWindow
         '
         Me.disableTTCB.AutoSize = True
         Me.disableTTCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.disableTTCB.Location = New System.Drawing.Point(14, 365)
+        Me.disableTTCB.Location = New System.Drawing.Point(13, 413)
         Me.disableTTCB.Name = "disableTTCB"
         Me.disableTTCB.Size = New System.Drawing.Size(368, 21)
-        Me.disableTTCB.TabIndex = 15
+        Me.disableTTCB.TabIndex = 14
         Me.disableTTCB.Text = "Disable tool tips on the Control Panel and Playlist windows"
         Me.disableTTCB.UseVisualStyleBackColor = True
         '
@@ -223,10 +226,10 @@ Partial Class optionsWindow
         '
         Me.autoloadCB.AutoSize = True
         Me.autoloadCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.autoloadCB.Location = New System.Drawing.Point(14, 424)
+        Me.autoloadCB.Location = New System.Drawing.Point(13, 473)
         Me.autoloadCB.Name = "autoloadCB"
         Me.autoloadCB.Size = New System.Drawing.Size(338, 21)
-        Me.autoloadCB.TabIndex = 16
+        Me.autoloadCB.TabIndex = 17
         Me.autoloadCB.Text = "Auto-load the last open .looper file on Looper launch"
         Me.autoloadCB.UseVisualStyleBackColor = True
         '
@@ -234,10 +237,10 @@ Partial Class optionsWindow
         '
         Me.allowMICB.AutoSize = True
         Me.allowMICB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.allowMICB.Location = New System.Drawing.Point(14, 346)
+        Me.allowMICB.Location = New System.Drawing.Point(13, 393)
         Me.allowMICB.Name = "allowMICB"
         Me.allowMICB.Size = New System.Drawing.Size(227, 21)
-        Me.allowMICB.TabIndex = 17
+        Me.allowMICB.TabIndex = 13
         Me.allowMICB.Text = "Allow multiple instances of Looper"
         Me.allowMICB.UseVisualStyleBackColor = True
         '
@@ -245,10 +248,10 @@ Partial Class optionsWindow
         '
         Me.disableAutoPlayCB.AutoSize = True
         Me.disableAutoPlayCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.disableAutoPlayCB.Location = New System.Drawing.Point(14, 404)
+        Me.disableAutoPlayCB.Location = New System.Drawing.Point(13, 453)
         Me.disableAutoPlayCB.Name = "disableAutoPlayCB"
         Me.disableAutoPlayCB.Size = New System.Drawing.Size(313, 21)
-        Me.disableAutoPlayCB.TabIndex = 18
+        Me.disableAutoPlayCB.TabIndex = 16
         Me.disableAutoPlayCB.Text = "Disable auto-playing after exiting Looper dialogs"
         Me.disableAutoPlayCB.UseVisualStyleBackColor = True
         '
@@ -256,7 +259,7 @@ Partial Class optionsWindow
         '
         Me.disableAutoPlayOnLoadCB.AutoSize = True
         Me.disableAutoPlayOnLoadCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.disableAutoPlayOnLoadCB.Location = New System.Drawing.Point(14, 488)
+        Me.disableAutoPlayOnLoadCB.Location = New System.Drawing.Point(13, 539)
         Me.disableAutoPlayOnLoadCB.Name = "disableAutoPlayOnLoadCB"
         Me.disableAutoPlayOnLoadCB.Size = New System.Drawing.Size(361, 21)
         Me.disableAutoPlayOnLoadCB.TabIndex = 19
@@ -267,19 +270,19 @@ Partial Class optionsWindow
         '
         Me.forcePauseCB.AutoSize = True
         Me.forcePauseCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.forcePauseCB.Location = New System.Drawing.Point(14, 384)
+        Me.forcePauseCB.Location = New System.Drawing.Point(13, 433)
         Me.forcePauseCB.Name = "forcePauseCB"
         Me.forcePauseCB.Size = New System.Drawing.Size(309, 21)
-        Me.forcePauseCB.TabIndex = 20
+        Me.forcePauseCB.TabIndex = 15
         Me.forcePauseCB.Text = "Force MPC-HC/BE to pause when loading events"
         Me.forcePauseCB.UseVisualStyleBackColor = True
         '
         'savePrefsButton
         '
         Me.savePrefsButton.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.savePrefsButton.Location = New System.Drawing.Point(283, 528)
+        Me.savePrefsButton.Location = New System.Drawing.Point(280, 567)
         Me.savePrefsButton.Name = "savePrefsButton"
-        Me.savePrefsButton.Size = New System.Drawing.Size(110, 31)
+        Me.savePrefsButton.Size = New System.Drawing.Size(110, 35)
         Me.savePrefsButton.TabIndex = 22
         Me.savePrefsButton.Text = "Save Prefs"
         Me.savePrefsButton.UseVisualStyleBackColor = True
@@ -288,27 +291,27 @@ Partial Class optionsWindow
         '
         Me.cancelPrefsButton.DialogResult = System.Windows.Forms.DialogResult.Cancel
         Me.cancelPrefsButton.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.cancelPrefsButton.Location = New System.Drawing.Point(167, 528)
+        Me.cancelPrefsButton.Location = New System.Drawing.Point(164, 567)
         Me.cancelPrefsButton.Name = "cancelPrefsButton"
-        Me.cancelPrefsButton.Size = New System.Drawing.Size(110, 31)
-        Me.cancelPrefsButton.TabIndex = 23
+        Me.cancelPrefsButton.Size = New System.Drawing.Size(110, 35)
+        Me.cancelPrefsButton.TabIndex = 21
         Me.cancelPrefsButton.Text = "Cancel"
         Me.cancelPrefsButton.UseVisualStyleBackColor = True
         '
         'saveNewNameTF
         '
         Me.saveNewNameTF.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.saveNewNameTF.Location = New System.Drawing.Point(11, 107)
+        Me.saveNewNameTF.Location = New System.Drawing.Point(10, 126)
         Me.saveNewNameTF.Name = "saveNewNameTF"
         Me.saveNewNameTF.Size = New System.Drawing.Size(379, 25)
-        Me.saveNewNameTF.TabIndex = 24
+        Me.saveNewNameTF.TabIndex = 5
         Me.saveNewNameTF.Text = "New Loop Event"
         '
         'saveNewNameLabel
         '
         Me.saveNewNameLabel.AutoSize = True
         Me.saveNewNameLabel.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.saveNewNameLabel.Location = New System.Drawing.Point(8, 85)
+        Me.saveNewNameLabel.Location = New System.Drawing.Point(7, 108)
         Me.saveNewNameLabel.Name = "saveNewNameLabel"
         Me.saveNewNameLabel.Size = New System.Drawing.Size(105, 17)
         Me.saveNewNameLabel.TabIndex = 25
@@ -318,10 +321,10 @@ Partial Class optionsWindow
         '
         Me.saveNewNameCB.AutoSize = True
         Me.saveNewNameCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.saveNewNameCB.Location = New System.Drawing.Point(11, 137)
+        Me.saveNewNameCB.Location = New System.Drawing.Point(10, 154)
         Me.saveNewNameCB.Name = "saveNewNameCB"
         Me.saveNewNameCB.Size = New System.Drawing.Size(183, 21)
-        Me.saveNewNameCB.TabIndex = 26
+        Me.saveNewNameCB.TabIndex = 6
         Me.saveNewNameCB.Text = "Save this setting as Default"
         Me.saveNewNameCB.UseVisualStyleBackColor = True
         '
@@ -329,10 +332,10 @@ Partial Class optionsWindow
         '
         Me.savePLWindowSizeCB.AutoSize = True
         Me.savePLWindowSizeCB.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.savePLWindowSizeCB.Location = New System.Drawing.Point(14, 302)
+        Me.savePLWindowSizeCB.Location = New System.Drawing.Point(13, 327)
         Me.savePLWindowSizeCB.Name = "savePLWindowSizeCB"
         Me.savePLWindowSizeCB.Size = New System.Drawing.Size(354, 21)
-        Me.savePLWindowSizeCB.TabIndex = 27
+        Me.savePLWindowSizeCB.TabIndex = 11
         Me.savePLWindowSizeCB.Text = "Save current Playlist window position and size as default"
         Me.savePLWindowSizeCB.UseVisualStyleBackColor = True
         '
@@ -340,7 +343,7 @@ Partial Class optionsWindow
         '
         Me.openingFilesLabel.AutoSize = True
         Me.openingFilesLabel.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.openingFilesLabel.Location = New System.Drawing.Point(8, 448)
+        Me.openingFilesLabel.Location = New System.Drawing.Point(7, 498)
         Me.openingFilesLabel.Name = "openingFilesLabel"
         Me.openingFilesLabel.Size = New System.Drawing.Size(141, 17)
         Me.openingFilesLabel.TabIndex = 28
@@ -350,12 +353,41 @@ Partial Class optionsWindow
         '
         Me.showINIFileButton.DialogResult = System.Windows.Forms.DialogResult.Cancel
         Me.showINIFileButton.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.showINIFileButton.Location = New System.Drawing.Point(12, 528)
+        Me.showINIFileButton.Location = New System.Drawing.Point(9, 567)
         Me.showINIFileButton.Name = "showINIFileButton"
-        Me.showINIFileButton.Size = New System.Drawing.Size(149, 31)
-        Me.showINIFileButton.TabIndex = 29
+        Me.showINIFileButton.Size = New System.Drawing.Size(149, 35)
+        Me.showINIFileButton.TabIndex = 20
         Me.showINIFileButton.Text = "Show INI file in Explorer"
         Me.showINIFileButton.UseVisualStyleBackColor = True
+        '
+        'currentVersionLabel
+        '
+        Me.currentVersionLabel.AutoSize = True
+        Me.currentVersionLabel.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.currentVersionLabel.Location = New System.Drawing.Point(7, 8)
+        Me.currentVersionLabel.Name = "currentVersionLabel"
+        Me.currentVersionLabel.Size = New System.Drawing.Size(108, 17)
+        Me.currentVersionLabel.TabIndex = 30
+        Me.currentVersionLabel.Text = "Current Version:"
+        '
+        'currentVersionTF
+        '
+        Me.currentVersionTF.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.currentVersionTF.Location = New System.Drawing.Point(112, 8)
+        Me.currentVersionTF.Name = "currentVersionTF"
+        Me.currentVersionTF.Size = New System.Drawing.Size(275, 17)
+        Me.currentVersionTF.TabIndex = 31
+        '
+        'disableHK
+        '
+        Me.disableHK.AutoSize = True
+        Me.disableHK.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.disableHK.Location = New System.Drawing.Point(13, 373)
+        Me.disableHK.Name = "disableHK"
+        Me.disableHK.Size = New System.Drawing.Size(137, 21)
+        Me.disableHK.TabIndex = 12
+        Me.disableHK.Text = "Disable all Hotkeys"
+        Me.disableHK.UseVisualStyleBackColor = True
         '
         'optionsWindow
         '
@@ -363,8 +395,11 @@ Partial Class optionsWindow
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.CancelButton = Me.cancelPrefsButton
-        Me.ClientSize = New System.Drawing.Size(401, 569)
+        Me.ClientSize = New System.Drawing.Size(401, 613)
         Me.ControlBox = False
+        Me.Controls.Add(Me.disableHK)
+        Me.Controls.Add(Me.currentVersionTF)
+        Me.Controls.Add(Me.currentVersionLabel)
         Me.Controls.Add(Me.showINIFileButton)
         Me.Controls.Add(Me.openingFilesLabel)
         Me.Controls.Add(Me.savePLWindowSizeCB)
@@ -435,4 +470,7 @@ Partial Class optionsWindow
     Friend WithEvents savePLWindowSizeCB As CheckBox
     Friend WithEvents openingFilesLabel As Label
     Friend WithEvents showINIFileButton As Button
+    Friend WithEvents currentVersionLabel As Label
+    Friend WithEvents currentVersionTF As Label
+    Friend WithEvents disableHK As CheckBox
 End Class

@@ -26,6 +26,7 @@
             Dim options_alwaysOnTop As String = betweenTheLines(fileReader, "alwaysOnTop=", vbCrLf, "-1") ' whether or not to always be on top from launch
             Dim options_loopButtonMode As String = betweenTheLines(fileReader, "loopButtonMode=", vbCrLf, "-1") ' what the loop button mode should be on launching
 
+            Dim options_disableHotkeys As String = betweenTheLines(fileReader, "disableHotkeys", vbCrLf, "-1") ' whether or not to disable hotkeys
             Dim options_allowMultipleInstances As String = betweenTheLines(fileReader, "allowMultipleInstances=", vbCrLf, "-1") ' whether or not to allow multiple instances of Looper
             Dim options_disableToolTips As String = betweenTheLines(fileReader, "disableToolTips=", vbCrLf, "-1") ' whether or not to show tooltips on the panels
             Dim options_pausePlaybackOnLoadEvent As String = betweenTheLines(fileReader, "pausePlaybackOnLoadEvent=", vbCrLf, "-1") ' whether to force pause when loading new events instead of playing them
@@ -66,6 +67,7 @@
             If options_startPositionL <> "-1" Then saveLooperWndPosCB.Checked = True
             If options_startPLPositionL <> "-1" Then savePLWindowSizeCB.Checked = True
 
+            If options_disableHotkeys <> "-1" Then disableHK.Checked = True
             If options_allowMultipleInstances <> "-1" Then allowMICB.Checked = True
             If options_disableToolTips <> "-1" Then disableTTCB.Checked = True
             If options_pausePlaybackOnLoadEvent <> "-1" Then forcePauseCB.Checked = True
@@ -113,6 +115,13 @@
         End If
 
         If saveCurrentLoopButtonCB.Checked Then writingString = writingString & "loopButtonMode=" & mainWindow.loopModeButton.Text & vbCrLf
+
+        If disableHK.Checked Then
+            writingString = writingString & "disableHotkeys=1" & vbCrLf
+            mainWindow.disableHotkeys = True
+        Else
+            mainWindow.disableHotkeys = False
+        End If
 
         If allowMICB.Checked Then writingString = writingString & "allowMultipleInstances=1" & vbCrLf
 
@@ -196,6 +205,7 @@
 
     Private Sub optionsWindow_Shown(sender As Object, e As EventArgs) Handles MyBase.Shown
         Me.Icon = My.Resources.icon
+        currentVersionTF.Text = My.Application.Info.Version.ToString ' list the current build date in the Options window
         mainWindow.SendMessage(CMD_SEND.CMD_PAUSE)
         options_loadINIFile()
     End Sub

@@ -51,7 +51,7 @@ Public Class mainWindow
     Private myHandle, plHandle As IntPtr ' the current hWnd for me, and for the playlist
 
     ' Working with hotkeys
-    Private disableHotkeys As Boolean = False ' whether or not to disable hotkeys
+    Public disableHotkeys As Boolean = False ' whether or not to disable hotkeys
     Public hotkeysActive As Boolean ' whether hotkeys are active currently or not
 
     Public dockPlaylistWindow As Boolean = False ' whether or not to dock the playlist to the main window (if it's sized differerntly, then no...)
@@ -331,14 +331,14 @@ Public Class mainWindow
 
         setHotKeys() ' initialize the hotkeys
 
-        Me.Text = "Looper 2 by Zach Glenwright [" & My.Resources.BuildDate & " Version]" ' change the title to the actual title (this is done for the "find the other instance" function below)
+        Me.Text = "Looper 2 by Zach Glenwright" ' change the title to the actual title (this is done for the "find the other instance" function below)
         Me.Show() ' finally show the window, once initialization is done
     End Sub
 
     Private Function PrevInstance() As Boolean
         If UBound(Process.GetProcessesByName(Process.GetCurrentProcess.ProcessName)) > 0 Then ' if we're already running a Looper process, and we're not supposed to have new processes
             If My.Application.CommandLineArgs.Count > 0 Then ' if we have a command line (file to launch)
-                Dim oldLooperHwnd As IntPtr = FindWindow(Nothing, "Looper 2 by Zach Glenwright [" & My.Resources.BuildDate & " Version]") ' find the old hWnd
+                Dim oldLooperHwnd As IntPtr = FindWindow(Nothing, "Looper 2 by Zach Glenwright") ' find the old hWnd
                 Dim pathToOpen = My.Application.CommandLineArgs(0) ' get the path to the file
 
                 If Strings.InStr(pathToOpen, ".looper") <> 0 Then ' if the path has ".looper" in it
@@ -500,7 +500,6 @@ Public Class mainWindow
         Double.TryParse(betweenTheLines(fileReader, "inPointOffset=", vbCrLf, "0"), inPointOffset)
         Double.TryParse(betweenTheLines(fileReader, "outPointOffset=", vbCrLf, "0.15"), outPointOffset)
 
-        ' TODO: Write a "disable hotkeys" preference
         Boolean.TryParse(betweenTheLines(fileReader, "disableHotkeys=", vbCrLf, "B_False"), disableHotkeys)
         Boolean.TryParse(betweenTheLines(fileReader, "autoplayFirstEvent=", vbCrLf, "B_True"), autoplayFirstEvent)
         Boolean.TryParse(betweenTheLines(fileReader, "autoPlayDialogs=", vbCrLf, "B_True"), autoPlayDialogs)

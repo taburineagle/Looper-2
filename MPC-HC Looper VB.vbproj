@@ -236,14 +236,13 @@
   <ItemGroup>
     <None Include="Resources\Folder-42px-Grey.png" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\BuildDate.txt" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PreBuildEvent>powershell -Command "((Get-Date -Format \"MM-dd-yy.HHmmss\").ToString()) | Out-File '$(ProjectDir)Resources\BuildDate.txt'"</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>C:\Users\zachg\source\repos\Extras\PostCompile.bat</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
