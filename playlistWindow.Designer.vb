@@ -51,6 +51,10 @@ Partial Class playlistWindow
         Me.eventINPointHeader = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
         Me.eventOutPointHeader = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
         Me.eventDurHeader = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
+        Me.xPosHeader = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
+        Me.yPosHeader = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
+        Me.xZoomHeader = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
+        Me.yZoomHeader = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
         Me.eventFilenameHeader = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
         Me.menu_Add.SuspendLayout()
         Me.menu_load.SuspendLayout()
@@ -81,6 +85,7 @@ Partial Class playlistWindow
         '
         'menu_Add
         '
+        Me.menu_Add.ImageScalingSize = New System.Drawing.Size(28, 28)
         Me.menu_Add.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.menuItem_AddAtEnd, Me.menuItem_InsertEvents})
         Me.menu_Add.Name = "menu_Add"
         Me.menu_Add.Size = New System.Drawing.Size(356, 48)
@@ -135,6 +140,7 @@ Partial Class playlistWindow
         '
         'menu_load
         '
+        Me.menu_load.ImageScalingSize = New System.Drawing.Size(28, 28)
         Me.menu_load.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.menuItem_importLooperFile})
         Me.menu_load.Name = "ContextMenuStrip1"
         Me.menu_load.ShowImageMargin = False
@@ -163,6 +169,7 @@ Partial Class playlistWindow
         '
         'menu_Save
         '
+        Me.menu_Save.ImageScalingSize = New System.Drawing.Size(28, 28)
         Me.menu_Save.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.menuItem_SaveSelection})
         Me.menu_Save.Name = "menu_Save"
         Me.menu_Save.ShowImageMargin = False
@@ -238,14 +245,14 @@ Partial Class playlistWindow
         Me.eventsList.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
             Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.eventsList.Columns.AddRange(New System.Windows.Forms.ColumnHeader() {Me.eventPosHeader, Me.eventNameHeader, Me.speedColumn, Me.loopsColumn, Me.eventINPointHeader, Me.eventOutPointHeader, Me.eventDurHeader, Me.eventFilenameHeader})
+        Me.eventsList.Columns.AddRange(New System.Windows.Forms.ColumnHeader() {Me.eventPosHeader, Me.eventNameHeader, Me.speedColumn, Me.loopsColumn, Me.eventINPointHeader, Me.eventOutPointHeader, Me.eventDurHeader, Me.xPosHeader, Me.yPosHeader, Me.xZoomHeader, Me.yZoomHeader, Me.eventFilenameHeader})
         Me.eventsList.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.eventsList.FullRowSelect = True
         Me.eventsList.GridLines = True
         Me.eventsList.HideSelection = False
         Me.eventsList.Location = New System.Drawing.Point(0, 60)
         Me.eventsList.Name = "eventsList"
-        Me.eventsList.Size = New System.Drawing.Size(572, 439)
+        Me.eventsList.Size = New System.Drawing.Size(572, 440)
         Me.eventsList.TabIndex = 9
         Me.eventsList.UseCompatibleStateImageBehavior = False
         Me.eventsList.View = System.Windows.Forms.View.Details
@@ -285,6 +292,26 @@ Partial Class playlistWindow
         Me.eventDurHeader.Text = "Duration"
         Me.eventDurHeader.Width = 75
         '
+        'xPosHeader
+        '
+        Me.xPosHeader.Text = "X Offset"
+        Me.xPosHeader.Width = 65
+        '
+        'yPosHeader
+        '
+        Me.yPosHeader.Text = "Y Offset"
+        Me.yPosHeader.Width = 65
+        '
+        'xZoomHeader
+        '
+        Me.xZoomHeader.Text = "X Zoom"
+        Me.xZoomHeader.Width = 65
+        '
+        'yZoomHeader
+        '
+        Me.yZoomHeader.Text = "Y Zoom"
+        Me.yZoomHeader.Width = 65
+        '
         'eventFilenameHeader
         '
         Me.eventFilenameHeader.Text = "File Path"
@@ -310,7 +337,7 @@ Partial Class playlistWindow
         Me.Controls.Add(Me.saveButton)
         Me.Controls.Add(Me.listViewEditor)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow
-        Me.MinimumSize = New System.Drawing.Size(588, 250)
+        Me.MinimumSize = New System.Drawing.Size(584, 238)
         Me.Name = "playlistWindow"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.Manual
         Me.Text = "Playlist - Untitled"
@@ -350,4 +377,8 @@ Partial Class playlistWindow
     Friend WithEvents toolTips As ToolTip
     Friend WithEvents menu_Save As ContextMenuStrip
     Friend WithEvents menuItem_SaveSelection As ToolStripMenuItem
+    Friend WithEvents xZoomHeader As ColumnHeader
+    Friend WithEvents yZoomHeader As ColumnHeader
+    Friend WithEvents xPosHeader As ColumnHeader
+    Friend WithEvents yPosHeader As ColumnHeader
 End Class

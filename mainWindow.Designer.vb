@@ -58,6 +58,15 @@ Partial Class mainWindow
         Me.showPlayingFileInExplorerButton = New System.Windows.Forms.Button()
         Me.toolTips = New System.Windows.Forms.ToolTip(Me.components)
         Me.slipTimer = New System.Windows.Forms.Timer(Me.components)
+        Me.xZoomLabel = New System.Windows.Forms.Label()
+        Me.xZoomTF = New System.Windows.Forms.TextBox()
+        Me.yZoomTF = New System.Windows.Forms.TextBox()
+        Me.yZoomLabel = New System.Windows.Forms.Label()
+        Me.yPosTF = New System.Windows.Forms.TextBox()
+        Me.yPosLabel = New System.Windows.Forms.Label()
+        Me.xPosTF = New System.Windows.Forms.TextBox()
+        Me.xPosLabel = New System.Windows.Forms.Label()
+        Me.zoomAxesLinkButton = New System.Windows.Forms.CheckBox()
         CType(Me.speedSlider, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
@@ -294,10 +303,11 @@ Partial Class mainWindow
         'speed100Button
         '
         Me.speed100Button.AutoSize = True
+        Me.speed100Button.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.speed100Button.Font = New System.Drawing.Font("Segoe UI", 9.5!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.speed100Button.Location = New System.Drawing.Point(267, 118)
         Me.speed100Button.Name = "speed100Button"
-        Me.speed100Button.Size = New System.Drawing.Size(40, 17)
+        Me.speed100Button.Size = New System.Drawing.Size(42, 19)
         Me.speed100Button.TabIndex = 21
         Me.speed100Button.Text = "100%"
         Me.speed100Button.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
@@ -405,11 +415,118 @@ Partial Class mainWindow
         'slipTimer
         '
         '
+        'xZoomLabel
+        '
+        Me.xZoomLabel.AutoSize = True
+        Me.xZoomLabel.Font = New System.Drawing.Font("Segoe UI", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.xZoomLabel.Location = New System.Drawing.Point(296, 154)
+        Me.xZoomLabel.MaximumSize = New System.Drawing.Size(91, 13)
+        Me.xZoomLabel.Name = "xZoomLabel"
+        Me.xZoomLabel.Size = New System.Drawing.Size(51, 13)
+        Me.xZoomLabel.TabIndex = 28
+        Me.xZoomLabel.Text = "X ZOOM"
+        Me.xZoomLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        '
+        'xZoomTF
+        '
+        Me.xZoomTF.Font = New System.Drawing.Font("Segoe UI", 8.0!)
+        Me.xZoomTF.Location = New System.Drawing.Point(353, 151)
+        Me.xZoomTF.Name = "xZoomTF"
+        Me.xZoomTF.Size = New System.Drawing.Size(50, 22)
+        Me.xZoomTF.TabIndex = 29
+        Me.xZoomTF.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
+        '
+        'yZoomTF
+        '
+        Me.yZoomTF.Font = New System.Drawing.Font("Segoe UI", 8.0!)
+        Me.yZoomTF.Location = New System.Drawing.Point(449, 151)
+        Me.yZoomTF.Name = "yZoomTF"
+        Me.yZoomTF.Size = New System.Drawing.Size(50, 22)
+        Me.yZoomTF.TabIndex = 31
+        Me.yZoomTF.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
+        '
+        'yZoomLabel
+        '
+        Me.yZoomLabel.AutoSize = True
+        Me.yZoomLabel.Font = New System.Drawing.Font("Segoe UI", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.yZoomLabel.Location = New System.Drawing.Point(502, 154)
+        Me.yZoomLabel.MaximumSize = New System.Drawing.Size(91, 13)
+        Me.yZoomLabel.Name = "yZoomLabel"
+        Me.yZoomLabel.Size = New System.Drawing.Size(51, 13)
+        Me.yZoomLabel.TabIndex = 30
+        Me.yZoomLabel.Text = "Y ZOOM"
+        Me.yZoomLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        '
+        'yPosTF
+        '
+        Me.yPosTF.Font = New System.Drawing.Font("Segoe UI", 8.0!)
+        Me.yPosTF.Location = New System.Drawing.Point(188, 151)
+        Me.yPosTF.Name = "yPosTF"
+        Me.yPosTF.Size = New System.Drawing.Size(50, 22)
+        Me.yPosTF.TabIndex = 28
+        Me.yPosTF.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
+        '
+        'yPosLabel
+        '
+        Me.yPosLabel.AutoSize = True
+        Me.yPosLabel.Font = New System.Drawing.Font("Segoe UI", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.yPosLabel.Location = New System.Drawing.Point(128, 154)
+        Me.yPosLabel.MaximumSize = New System.Drawing.Size(91, 13)
+        Me.yPosLabel.Name = "yPosLabel"
+        Me.yPosLabel.Size = New System.Drawing.Size(55, 13)
+        Me.yPosLabel.TabIndex = 34
+        Me.yPosLabel.Text = "Y OFFSET"
+        Me.yPosLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        '
+        'xPosTF
+        '
+        Me.xPosTF.Font = New System.Drawing.Font("Segoe UI", 8.0!)
+        Me.xPosTF.Location = New System.Drawing.Point(73, 151)
+        Me.xPosTF.Name = "xPosTF"
+        Me.xPosTF.Size = New System.Drawing.Size(50, 22)
+        Me.xPosTF.TabIndex = 27
+        Me.xPosTF.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
+        '
+        'xPosLabel
+        '
+        Me.xPosLabel.AutoSize = True
+        Me.xPosLabel.Font = New System.Drawing.Font("Segoe UI", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.xPosLabel.Location = New System.Drawing.Point(14, 154)
+        Me.xPosLabel.MaximumSize = New System.Drawing.Size(91, 13)
+        Me.xPosLabel.Name = "xPosLabel"
+        Me.xPosLabel.Size = New System.Drawing.Size(55, 13)
+        Me.xPosLabel.TabIndex = 32
+        Me.xPosLabel.Text = "X OFFSET"
+        Me.xPosLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        '
+        'zoomAxesLinkButton
+        '
+        Me.zoomAxesLinkButton.Appearance = System.Windows.Forms.Appearance.Button
+        Me.zoomAxesLinkButton.AutoSize = True
+        Me.zoomAxesLinkButton.Checked = True
+        Me.zoomAxesLinkButton.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.zoomAxesLinkButton.Font = New System.Drawing.Font("Segoe UI", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.zoomAxesLinkButton.Location = New System.Drawing.Point(409, 150)
+        Me.zoomAxesLinkButton.Name = "zoomAxesLinkButton"
+        Me.zoomAxesLinkButton.Size = New System.Drawing.Size(39, 23)
+        Me.zoomAxesLinkButton.TabIndex = 30
+        Me.zoomAxesLinkButton.Text = "LINK"
+        Me.zoomAxesLinkButton.UseVisualStyleBackColor = True
+        '
         'mainWindow
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(572, 143)
+        Me.ClientSize = New System.Drawing.Size(565, 187)
+        Me.Controls.Add(Me.zoomAxesLinkButton)
+        Me.Controls.Add(Me.yPosTF)
+        Me.Controls.Add(Me.yPosLabel)
+        Me.Controls.Add(Me.xPosTF)
+        Me.Controls.Add(Me.xPosLabel)
+        Me.Controls.Add(Me.yZoomTF)
+        Me.Controls.Add(Me.yZoomLabel)
+        Me.Controls.Add(Me.xZoomTF)
+        Me.Controls.Add(Me.xZoomLabel)
         Me.Controls.Add(Me.showPlayingFileInExplorerButton)
         Me.Controls.Add(Me.loadOptionsWindowButton)
         Me.Controls.Add(Me.speed75Button)
@@ -444,8 +561,8 @@ Partial Class mainWindow
         Me.Controls.Add(Me.loopModeButton)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
         Me.Location = New System.Drawing.Point(20, 20)
-        Me.MaximumSize = New System.Drawing.Size(588, 182)
-        Me.MinimumSize = New System.Drawing.Size(588, 182)
+        Me.MaximumSize = New System.Drawing.Size(581, 226)
+        Me.MinimumSize = New System.Drawing.Size(581, 226)
         Me.Name = "mainWindow"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.Manual
         Me.Text = "mainWindow"
@@ -490,4 +607,13 @@ Partial Class mainWindow
     Friend WithEvents showPlayingFileInExplorerButton As Button
     Friend WithEvents toolTips As ToolTip
     Friend WithEvents slipTimer As Timer
+    Friend WithEvents xZoomLabel As Label
+    Friend WithEvents xZoomTF As TextBox
+    Friend WithEvents yZoomTF As TextBox
+    Friend WithEvents yZoomLabel As Label
+    Friend WithEvents yPosTF As TextBox
+    Friend WithEvents yPosLabel As Label
+    Friend WithEvents xPosTF As TextBox
+    Friend WithEvents xPosLabel As Label
+    Friend WithEvents zoomAxesLinkButton As CheckBox
 End Class

@@ -16,8 +16,8 @@
     Dim currentSearchPlayingEvent As Integer = -1 ' the ID# (from (0) of the event in the events list) of the current playing event's position in the playlist
     Dim eventsListArray(0, 0) As Object ' an array to hold the events list items during searching
 
-    ReadOnly normalFont As New Font("Segoe UI", 9) ' the normal "non-playing" font for the events list
-    ReadOnly boldFont As New Font("Segoe UI", 9, FontStyle.Bold) ' the bold "playing" font for the events list
+    Public normalFont As New Font("Segoe UI", 9) ' the normal "non-playing" font for the events list
+    Public boldFont As New Font("Segoe UI", 9, FontStyle.Bold) ' the bold "playing" font for the events list
 
     ReadOnly errorColor As Color = Color.FromArgb(228, 162, 162) ' the color red signifies ERROR
     ReadOnly foundColor As Color = Color.FromArgb(162, 228, 179) ' we're good to go!
@@ -381,7 +381,7 @@
             previousPath = Nothing
 
             For a As Integer = 0 To missingEvents.Count - 1 ' iterate through the empty paths now
-                pathToFind = eventsList.Items(missingEvents(a)).SubItems(7).Text ' the original "missing" file path
+                pathToFind = eventsList.Items(missingEvents(a)).SubItems(11).Text ' the original "missing" file path
                 pathName = My.Computer.FileSystem.GetFileInfo(pathToFind).Name ' the name of the file (minus the directory)
                 pathExt = Mid(My.Computer.FileSystem.GetFileInfo(pathToFind).Extension, 2) ' the extension of the file
 
@@ -398,15 +398,15 @@
                                 previousPath = My.Computer.FileSystem.GetFileInfo(fileFind.FileName).DirectoryName.ToString ' check this against the next file
 
                                 For b As Integer = 0 To missingEvents.Count - 1 ' scan through the rest of the missing items to see if paths are restored
-                                    If eventsList.Items(missingEvents(b)).SubItems(7).Text = pathToFind Then ' if this event matches the "missing" file path
-                                        eventsList.Items(missingEvents(b)).SubItems(7).Text = fileFind.FileName ' replace it with the newly found file
+                                    If eventsList.Items(missingEvents(b)).SubItems(11).Text = pathToFind Then ' if this event matches the "missing" file path
+                                        eventsList.Items(missingEvents(b)).SubItems(11).Text = fileFind.FileName ' replace it with the newly found file
                                         eventsList.Items(missingEvents(b)).BackColor = foundColor ' re-color that event green to show we've found the correct path
                                     Else ' if this event doesn't match the same file, still check it against the *directory*
-                                        Dim otherPathToFind As String = eventsList.Items(missingEvents(b)).SubItems(7).Text ' a comparison to check all files in the directory
+                                        Dim otherPathToFind As String = eventsList.Items(missingEvents(b)).SubItems(11).Text ' a comparison to check all files in the directory
                                         Dim otherPathName As String = My.Computer.FileSystem.GetFileInfo(otherPathToFind).Name ' this is the current base file we're looking for
 
                                         If My.Computer.FileSystem.GetFileInfo(previousPath & "\" & otherPathName).Exists Then ' if the file exists in the .looper file's path
-                                            eventsList.Items(missingEvents(a)).SubItems(7).Text = previousPath & "\" & otherPathName ' replace it with the newly found file
+                                            eventsList.Items(missingEvents(a)).SubItems(11).Text = previousPath & "\" & otherPathName ' replace it with the newly found file
                                             eventsList.Items(missingEvents(a)).BackColor = foundColor ' re-color that event green to show we've found the correct path
                                         End If
                                     End If
@@ -489,10 +489,26 @@
                                 writeString = writeString & "<L:" & eventsList.Items(savingList(a)).SubItems(3).Text & ">"
                             End If
 
+                            ' Check to make sure the default values aren't currently selected
+                            Dim xPosTest, yPosTest, xZoomTest, yZoomTest As Double
+
+                            Double.TryParse(eventsList.Items(savingList(a)).SubItems(7).Text, xPosTest)
+                            Double.TryParse(eventsList.Items(savingList(a)).SubItems(8).Text, yPosTest)
+                            Double.TryParse(eventsList.Items(savingList(a)).SubItems(9).Text, xZoomTest)
+                            Double.TryParse(eventsList.Items(savingList(a)).SubItems(10).Text, yZoomTest)
+
+                            ' If the default scaling parameters are different, then we need to save the current pan/scan to the event
+                            If Not (xPosTest = 0.5 And yPosTest = 0.5 And xZoomTest = 1.0 And yZoomTest = 1.0) Then
+                                writeString = writeString & "<Z:" & eventsList.Items(savingList(a)).SubItems(7).Text &
+                                                              "," & eventsList.Items(savingList(a)).SubItems(8).Text &
+                                                              "," & eventsList.Items(savingList(a)).SubItems(9).Text &
+                                                              "," & eventsList.Items(savingList(a)).SubItems(10).Text & ">"
+                            End If
+
                             writeString = writeString & eventsList.Items(savingList(a)).SubItems(1).Text & "|" &
                             eventsList.Items(savingList(a)).SubItems(4).Text & "|" &
                             eventsList.Items(savingList(a)).SubItems(5).Text & "|" &
-                            eventsList.Items(savingList(a)).SubItems(7).Text
+                            eventsList.Items(savingList(a)).SubItems(11).Text
 
                             writer.WriteLine(writeString) ' write this specific event to the .looper file
                         Next
@@ -562,10 +578,10 @@
 
         ' ----------------- CHECK TO SAVE SIDECAR FILE -----------------
         Dim filesMatching As Integer = 1
-        Dim checkAgainst As String = eventsList.Items(0).SubItems(7).Text ' the file path of the first event
+        Dim checkAgainst As String = eventsList.Items(0).SubItems(11).Text ' the file path of the first event
 
         For a As Integer = 1 To eventsList.Items.Count - 1
-            If eventsList.Items(a).SubItems(7).Text = checkAgainst Then filesMatching += 1 ' if the filename is the same in this event, then increment counter
+            If eventsList.Items(a).SubItems(11).Text = checkAgainst Then filesMatching += 1 ' if the filename is the same in this event, then increment counter
         Next
 
         If filesMatching = eventsList.Items.Count Then ' if the filenames are the same for every event, then default to saving a sidecar file
@@ -609,10 +625,14 @@
                                         ByVal eventINPoint As String,
                                         ByVal eventOUTPoint As String,
                                         ByVal eventPath As String,
+                                        Optional eventPosX As String = "0.5",
+                                        Optional eventPosY As String = "0.5",
+                                        Optional eventZoomX As String = "1",
+                                        Optional eventZoomY As String = "1",
                                         Optional eventNum As String = Nothing,
                                         Optional newDur As String = Nothing) As ListViewItem
 
-        Dim newItemArray(7) As String
+        Dim newItemArray(11) As String
 
         If eventNum = Nothing Then
             newItemArray(0) = CStr(totalNumberOfEvents) ' find the event number based on the current "new" event number
@@ -636,15 +656,19 @@
             newItemArray(6) = newDur ' we already calculated the duration in an earlier step (for combining events), so just use that value
         End If
 
-        newItemArray(7) = eventPath
+        newItemArray(7) = eventPosX
+        newItemArray(8) = eventPosY
+        newItemArray(9) = eventZoomX
+        newItemArray(10) = eventZoomY
+        newItemArray(11) = eventPath
 
-        Dim newEvent As ListViewItem = New ListViewItem(newItemArray)
+        Dim newEvent As New ListViewItem(newItemArray)
         Return newEvent
     End Function
 
 
     Private Sub addEvent(ByVal eventName As String, ByVal eventINPoint As String, ByVal eventOutPoint As String,
-                              ByVal eventFilePath As String, Optional newEventCount As Integer = 0)
+                         ByVal eventFilePath As String, Optional newEventCount As Integer = 0)
 
         ' if the eventFilePath returned from the Looper file has nothing in it, we can't check to see if the file exists
         ' so we have to skip adding this event
@@ -662,9 +686,11 @@
                 eventFilePath = fileExists
             End If
 
+            Dim customZoom = betweenTheLines(eventName, "<Z:", ">", "0.5,0.5,1.0,1.0").Split(Convert.ToChar(","))
+
             Dim newEvent As ListViewItem = returnListViewItem(removeParams(eventName), betweenTheLines(eventName, "<S:", ">", "100"),
-                                                              betweenTheLines(eventName, "<L:", ">", "1"), eventINPoint, eventOutPoint,
-                                                              eventFilePath)
+                                                              betweenTheLines(eventName, "<L:", ">", "1"), eventINPoint, eventOutPoint, eventFilePath,
+                                                              customZoom(0), customZoom(1), customZoom(2), customZoom(3))
 
             If insertItem = True Then
                 If eventsList.SelectedItems.Count > 0 Then ' if something is actually selected
@@ -695,7 +721,7 @@
             eventsList.ListViewItemSorter = Nothing ' add the event at the very end of the list if the list is sorted
 
             Dim newEvent = returnListViewItem(mainWindow.newEventString, mainWindow.speedSlider.Value.ToString, "1", mainWindow.inTF.Text, mainWindow.outTF.Text,
-                                          mainWindow.currentPlayingFile)
+                                              mainWindow.currentPlayingFile, mainWindow.xPosTF.Text, mainWindow.yPosTF.Text, mainWindow.xZoomTF.Text, mainWindow.yZoomTF.Text)
             Dim newIndex As Integer
 
             If insertItem = True Then
@@ -831,6 +857,10 @@
             eventsList.Items(theEvent).SubItems(4).Text = mainWindow.inTF.Text ' the new IN point for this event
             eventsList.Items(theEvent).SubItems(5).Text = mainWindow.outTF.Text ' the new OUT point for this event
             eventsList.Items(theEvent).SubItems(6).Text = NumberToTimeString(TimeStringToNumber(mainWindow.outTF.Text) - TimeStringToNumber(mainWindow.inTF.Text)) ' the new duration for this event
+            eventsList.Items(theEvent).SubItems(7).Text = mainWindow.xPosTF.Text ' the new X offset for this event
+            eventsList.Items(theEvent).SubItems(8).Text = mainWindow.yPosTF.Text ' the new Y offset for this event
+            eventsList.Items(theEvent).SubItems(9).Text = mainWindow.xZoomTF.Text ' the new X zoom for this event
+            eventsList.Items(theEvent).SubItems(10).Text = mainWindow.yZoomTF.Text ' the new Y zoom for this event
 
             setIsModified(1) ' we've modified the event
             tallyTotalList() ' re-tabulate the event list tally
@@ -862,7 +892,8 @@
 
             ' ----------------- BUILD NEW EVENT FROM THE OTHER EVENTS -----------------
             Dim combinedEvent = returnListViewItem(newEventName, "100", "1", newInTime, newOutTime,
-                                                   eventsList.SelectedItems(0).SubItems(7).Text,
+                                                   eventsList.SelectedItems(0).SubItems(11).Text,
+                                                   "0.5", "0.5", "1.0", "1.0",
                                                    eventsList.SelectedItems(eventsList.SelectedItems.Count - 1).SubItems(0).Text,
                                                    newDur)
             Dim newEventIdx As Integer = eventsList.SelectedItems(0).Index ' the index to insert the combined event into (get this before deleting below!)
@@ -937,21 +968,32 @@
             mainWindow.inTF.Text = eventsList.Items(selecteditem).SubItems(4).Text
             mainWindow.outTF.Text = eventsList.Items(selecteditem).SubItems(5).Text
 
-            If mainWindow.currentPlayingFile <> eventsList.Items(selecteditem).SubItems(7).Text Then ' we need to load another file
+            If mainWindow.currentPlayingFile <> eventsList.Items(selecteditem).SubItems(11).Text Then ' we need to load another file
                 If eventsList.Items(selecteditem).BackColor <> errorColor Then ' if there's no issue, then load the file
-                    mainWindow.SendMessage(CMD_SEND.CMD_OPENFILE, eventsList.Items(selecteditem).SubItems(7).Text)
+                    mainWindow.SendMessage(CMD_SEND.CMD_OPENFILE, eventsList.Items(selecteditem).SubItems(11).Text)
                     mainWindow.clearINOUTPoint = False
 
                     mainWindow.loadingEvent = True
-                    Int32.TryParse(eventsList.Items(selecteditem).SubItems(2).Text, mainWindow.loadingEvent_Speed)
+                    Integer.TryParse(eventsList.Items(selecteditem).SubItems(2).Text, mainWindow.loadingEvent_Speed)
+                    Double.TryParse(eventsList.Items(selecteditem).SubItems(7).Text, mainWindow.loadingEvent_xPos)
+                    Double.TryParse(eventsList.Items(selecteditem).SubItems(8).Text, mainWindow.loadingEvent_yPos)
+                    Double.TryParse(eventsList.Items(selecteditem).SubItems(9).Text, mainWindow.loadingEvent_xZoom)
+                    Double.TryParse(eventsList.Items(selecteditem).SubItems(10).Text, mainWindow.loadingEvent_yZoom)
                 Else
                     ' do we need to do anything here?
                 End If
             Else ' we're still working with the same file
-                mainWindow.SendMessage(CMD_SEND.CMD_SETPOSITION, CStr(TimeStringToNumber(eventsList.Items(selecteditem).SubItems(4).Text) - 0.5))
-
                 Dim theSpeed As Integer
+                Dim xZoom, yZoom, xPos, yPos As Double
+
                 Integer.TryParse(eventsList.Items(selecteditem).SubItems(2).Text, theSpeed)
+                Double.TryParse(eventsList.Items(selecteditem).SubItems(7).Text, xPos)
+                Double.TryParse(eventsList.Items(selecteditem).SubItems(8).Text, yPos)
+                Double.TryParse(eventsList.Items(selecteditem).SubItems(9).Text, xZoom)
+                Double.TryParse(eventsList.Items(selecteditem).SubItems(10).Text, yZoom)
+
+                mainWindow.SendMessage(CMD_SEND.CMD_SETPOSITION, CStr(TimeStringToNumber(eventsList.Items(selecteditem).SubItems(4).Text) - 0.5))
+                mainWindow.setPanScan(5, 0, xPos, yPos, xZoom, yZoom)
                 mainWindow.setSpeed(theSpeed)
 
                 stilLLoading = False

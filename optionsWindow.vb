@@ -20,6 +20,8 @@
             '================== Load the [Prefs] section first ==================
             Dim options_loopPreviewLength As String = betweenTheLines(fileReader, "loopPreviewLength=", vbCrLf, "-1") ' how long to preview a slip operation for
             Dim options_loopSlipLength As String = betweenTheLines(fileReader, "loopSlipLength=", vbCrLf, "-1") ' the current slip length
+            Dim options_defaultSpeed As String = betweenTheLines(fileReader, "defaultSpeed=", vbCrLf, "-1") ' the default playback speed
+
             Dim options_newEventName As String = betweenTheLines(fileReader, "newEventName=", vbCrLf, "-1") ' whether or not to show the playlist when Looper opens
 
             Dim options_hidePlaylistOnLaunch As String = betweenTheLines(fileReader, "hidePlaylistOnLaunch=", vbCrLf, "-1") ' whether or not to show the playlist when Looper opens
@@ -53,10 +55,17 @@
 
             '================== Draw the GUI with the information above ==================
             previewTimeTF.Text = CStr(mainWindow.loopPreviewLength) ' get this value from mainWindow and check against the preference
-            slipAmountTF.Text = CStr(mainWindow.loopSlipLength) ' get this value from mainWindow and check against the preference
+            slipAmountTF.Text = CStr(mainWindow.loopSlipLength) ' ...
+
+            If mainWindow.defaultSpeed = 100 Then ' if we're set to defaults, then load the current value of the speed slider to save
+                defaultSpeedTF.Text = CStr(mainWindow.speedSlider.Value)
+            Else ' load the value we currently have saved
+                defaultSpeedTF.Text = CStr(mainWindow.defaultSpeed)
+            End If
 
             If options_loopPreviewLength <> "-1" Then savePreviewTimeCB.Checked = True
             If options_loopSlipLength <> "-1" Then saveSlipTimeCB.Checked = True
+            If options_defaultSpeed <> "-1" Then saveSpeedCB.Checked = True
 
             saveNewNameTF.Text = mainWindow.newEventString
             If options_newEventName <> "-1" Then saveNewNameCB.Checked = True
@@ -76,21 +85,28 @@
 
             If options_dontForceLooperModeonOpen <> "-1" Then keepModeCB.Checked = True
             If options_autoplayFirstEvent <> "-1" Then disableAutoPlayOnLoadCB.Checked = True
-
         End If
     End Sub
 
     Private Sub options_saveINIFile()
         Dim writingString As String = Nothing
 
+        ' Check all numerical values - if they don't convert properly, use the default values
         Double.TryParse(previewTimeTF.Text, mainWindow.loopPreviewLength) ' change the current preview length to the length you just set
+        If mainWindow.loopPreviewLength = 0 Then mainWindow.loopPreviewLength = 0.25 ' if the conversion didn't work, use the default value
+
         Double.TryParse(slipAmountTF.Text, mainWindow.loopSlipLength) ' change the current slip length to the length you just set
+        If mainWindow.loopSlipLength = 0 Then mainWindow.loopPreviewLength = 0.5 ' ...
+
+        Integer.TryParse(defaultSpeedTF.Text, mainWindow.defaultSpeed) ' change the default playback speed to the speed you just set
+        If mainWindow.defaultSpeed = 0 Then mainWindow.defaultSpeed = 100 ' ...
+
         mainWindow.newEventString = saveNewNameTF.Text ' change the New Event String to the new string
 
         '================== Make the [Prefs] section of the INI ==================
         If savePreviewTimeCB.Checked Or saveSlipTimeCB.Checked Or saveCurrentLoopButtonCB.Checked Or saveAOTCB.Checked Or
         forcePauseCB.Checked Or keepModeCB.Checked Or disableTTCB.Checked Or autoloadCB.Checked Or allowMICB.Checked Or
-        disableAutoPlayCB.Checked Or disableAutoPlayOnLoadCB.Checked Or hidePlaylistWndCB.Checked Or
+        disableAutoPlayCB.Checked Or disableAutoPlayOnLoadCB.Checked Or hidePlaylistWndCB.Checked Or saveSpeedCB.Checked Or
         saveNewNameCB.Checked Or options_MPCConfirm <> "-1" Or options_dockMode <> "-1" Then
             writingString = "[Prefs]" & vbCrLf ' write the [Prefs] header of the INI file
         End If
@@ -100,8 +116,27 @@
         If options_dockMode <> "-1" Then writingString = writingString & "dockMode=" & options_dockMode & vbCrLf ' write the docking mode, for legacy reasons
 
         ' Save the options from the Options panel
-        If savePreviewTimeCB.Checked Then writingString = writingString & "loopPreviewLength=" & previewTimeTF.Text & vbCrLf
-        If saveSlipTimeCB.Checked Then writingString = writingString & "loopSlipLength=" & slipAmountTF.Text & vbCrLf
+        If savePreviewTimeCB.Checked Then ' if the value is not the default value, write it to the INI file
+            If mainWindow.loopPreviewLength <> 0.25 Then writingString = writingString & "loopPreviewLength=" & mainWindow.loopPreviewLength.ToString() & vbCrLf
+        Else
+            mainWindow.loopPreviewLength = 0.25 ' if we're not set to save this preference, set this back to defaults
+        End If
+
+        If saveSlipTimeCB.Checked Then
+            If mainWindow.loopSlipLength <> 0.5 Then writingString = writingString & "loopSlipLength=" & mainWindow.loopSlipLength.ToString() & vbCrLf
+        Else
+            mainWindow.loopSlipLength = 0.5 ' ...
+        End If
+
+        If saveSpeedCB.Checked Then
+            If mainWindow.defaultSpeed <> 100 Then writingString = writingString & "defaultSpeed=" & mainWindow.defaultSpeed.ToString() & vbCrLf
+        Else
+            mainWindow.defaultSpeed = 100 ' ...
+        End If
+
+        mainWindow.setSpeed(mainWindow.defaultSpeed) ' reset speed to current default
+        mainWindow.SendMessage(CMD_SEND.CMD_PAUSE) ' don't automatically begin playback after adjusting speed
+
         If saveNewNameCB.Checked Then writingString = writingString & "newEventName=" & saveNewNameTF.Text & vbCrLf
 
         If hidePlaylistWndCB.Checked Then writingString = writingString & "hidePlaylistOnLaunch=1" & vbCrLf
@@ -191,6 +226,20 @@
             writingString = writingString & "startPLPositionH=" & playlistWindow.Height & vbCrLf
         End If
 
+        '================== Make the [HotKeys] section of the INI ==================
+        Dim headerWritten As Boolean = False
+
+        For currentHK = 0 To UBound(mainWindow.hotKeyList)
+            If Not mainWindow.hotKeyList(currentHK, 1) = Nothing Then
+                If Not headerWritten Then
+                    writingString = writingString & "[HotKeys]" & vbCrLf
+                    headerWritten = True
+                End If
+
+                writingString = writingString & (currentHK + 100) & "=" & mainWindow.hotKeyList(currentHK, 1) & vbCrLf
+            End If
+        Next
+
         System.IO.File.WriteAllText(INIFile, writingString)
 
         MessageBox.Show("Your preferences have been saved to MPCLooper.ini:" & vbCrLf & vbCrLf & writingString,
@@ -215,12 +264,13 @@
         If mainWindow.autoPlayDialogs = True Then mainWindow.SendMessage(CMD_SEND.CMD_PLAY) ' we saved our preferences, so start playing again
     End Sub
 
-    Private Sub showINIFileButton_Click(sender As Object, e As EventArgs) Handles showINIFileButton.Click
-        Process.Start("explorer.exe", "/select,""" & INIFile & """")
-    End Sub
-
     Private Sub optionsWindow_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
         Me.Dispose()
+    End Sub
+
+    Private Sub customHotKeysButton_Click(sender As Object, e As EventArgs) Handles customHotKeysButton.Click
+        hotKeySettings.ShowDialog()
+        Me.DialogResult = DialogResult.None
     End Sub
 
     Private Sub cancelPrefsButton_Click(sender As Object, e As EventArgs) Handles cancelPrefsButton.Click

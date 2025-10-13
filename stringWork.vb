@@ -51,6 +51,7 @@
     Public Function removeParams(theString As String) As String
         Dim returnString = removeSection(theString, "<L:", ">") ' remove loop parameter from loop name
         returnString = removeSection(returnString, "<S:", ">") ' remove speed parameter from loop name
+        returnString = removeSection(returnString, "<Z:", ">") ' remove custom zoom parameter from loop name
 
         Return returnString
     End Function

@@ -1,8 +1,8 @@
-﻿Imports System.Threading
-Imports System.Runtime.InteropServices
+﻿Imports System.Runtime.InteropServices
+Imports System.Threading
 
 ' MPC-HC Looper VB - Looper re-written in Visual Basic
-' © 2014-2021 Zach Glenwright / Gull's Wing Media Productions
+' © 2014-2025 Zach Glenwright / Gull's Wing Media Productions
 ' http://www.gullswingmedia.com
 
 ' ======================================================================================
@@ -36,11 +36,19 @@ Public Class mainWindow
 
     Public loopSlipLength As Double = 0.5 ' how long a loop slips when you click the slip buttons
     Public loopPreviewLength As Double = 0.25 ' how long a loop previews for before going back to the loop
+    Public defaultSpeed As Integer = 100 ' the default playback speed
+
     Public autoPlayDialogs As Boolean = True ' whether to start playing as soon as dialog boxes close (text editing maybe?)
 
     Public autoloadLastLooper As String ' whether to not to automatically load the last looper from close
     Public autoplayFirstEvent As Boolean = True ' set this to True to allow auto-playing the first event when opening a .looper file
     Public dontForceLooperModeonOpen As Boolean = False ' whether to set Loop in Looper Mode after opening .looper file
+
+    ' Pan and Scan Settings
+    Public xPos As Double = 0.5
+    Public yPos As Double = 0.5
+    Public xZoom As Double = 1.0
+    Public yZoom As Double = 1.0
 
     ' Threads for background work
     Public posThread, frontThread As Thread ' threads to check on MPC-HC position and hotkeys
@@ -61,8 +69,59 @@ Public Class mainWindow
 
     Public loadingEvent As Boolean = False ' if we're in the process of loading an event (for the NOWPLAYING function)
     Public loadingEvent_Speed As Integer = 100
+    Public loadingEvent_xPos As Double = 0.5
+    Public loadingEvent_yPos As Double = 0.5
+    Public loadingEvent_xZoom As Double = 1.0
+    Public loadingEvent_yZoom As Double = 1.0
 
     Private slipAction As Integer = 0 ' the current slip action to undertake - 1/2 - slip IN left/right 3/4 - slip OUT left/right
+
+    ' CUSTOM HOTKEY PARAMS: description of shortcut (0), default setting modifier (1), key (2), current setting modifier (3), current setting (4)
+    Public hotKeyList(,) As String = {{"|73", Nothing, "Set In Point"},
+                                      {"|79", Nothing, "Set Out Point"},
+                                      {"C|73", Nothing, "Clear In Point"},
+                                      {"C|79", Nothing, "Clear Out Point"},
+                                      {"C|88", Nothing, "Clear IN and OUT Points"},
+                                      {"|219", Nothing, "Trim IN Point Left"},
+                                      {"S|219", Nothing, "Trim IN Point Left by default value"},
+                                      {"|221", Nothing, "Trim IN Point Right"},
+                                      {"S|221", Nothing, "Trim IN Point Right by default value"},
+                                      {"|186", Nothing, "Trim OUT Point Left"},
+                                      {"S|186", Nothing, "Trim OUT Point Left by default value"},
+                                      {"|222", Nothing, "Trim OUT Point Right"},
+                                      {"S|222", Nothing, "Trim OUT Point Right by default value"},
+                                      {"S|76", Nothing, "Change Loop Mode"},
+                                      {"C|49", Nothing, "Change Loop Mode to OFF"},
+                                      {"C|50", Nothing, "Change Loop Mode to LOOP MODE"},
+                                      {"C|51", Nothing, "Change Loop Mode to PLAYLIST MODE"},
+                                      {"C|52", Nothing, "Change Loop Mode to SHUFFLE MODE"},
+                                      {"C|84", Nothing, "Change Always on Top seting"},
+                                      {"C|81", Nothing, "Quit MPC-HC/BE Looper"},
+                                      {"C|188", Nothing, "Load Options Pane"},
+                                      {"A|45", Nothing, "Open Path to Current File in Explorer"},
+                                      {"C|78", Nothing, "Create New Event"},
+                                      {"|46", Nothing, "Delete currently selected Event(s)"},
+                                      {"C|83", Nothing, "Save current Events List (overwrite)"},
+                                      {"CS|83", Nothing, "Save the Selected Events to new Looper file"},
+                                      {"C|76", Nothing, "Load .looper file"},
+                                      {"CS|76", Nothing, "Import .looper into Current Events List"},
+                                      {"C|33", Nothing, "Go one event back in Events List"},
+                                      {"C|34", Nothing, "Go one event forward in Events List"},
+                                      {"C|38", Nothing, "Speed Up playback"},
+                                      {"C|40", Nothing, "Slow down playback"},
+                                      {"C|82", Nothing, "Reset to default speed"},
+                                      {"C|70", Nothing, "Go to the Search Field of the Playlist window"},
+                                      {"C|65", Nothing, "Select all events in Events List"},
+                                      {"CS|68", Nothing, "De-Select all events in Events List"},
+                                      {"|103", Nothing, "Zoom OUT on the X Axis"},
+                                      {"|105", Nothing, "Zoom IN on the X Axis"},
+                                      {"|97", Nothing, "Zoom OUT on the Y Axis"},
+                                      {"|99", Nothing, "Zoom IN on the Y Axis"},
+                                      {"|101", Nothing, "Reset Pan/Scan to Defaults"},
+                                      {"|100", Nothing, "Move Video to the Left"},
+                                      {"|102", Nothing, "Move Video to the Right"},
+                                      {"|104", Nothing, "Move Video Up"},
+                                      {"|98", Nothing, "Move Video Down"}}
 
     ' ======================================================================================
     ' ================= DLL CALLS AND STRUCTURES ===========================================
@@ -135,6 +194,7 @@ Public Class mainWindow
 
                         clearInPoint()
                         clearOutPoint()
+                        setPanScan(5, 0) ' reset the zoom and pan/scan settings to their defaults
 
                         playlistWindow.SetForegroundWindow(MPCHandle) ' make MPC-HC the foreground window
 
@@ -223,6 +283,7 @@ Public Class mainWindow
                         If loadingEvent = True Then
                             SendMessage(CMD_SEND.CMD_SETPOSITION, CStr(TimeStringToNumber(inTF.Text) - 0.5))
                             setSpeed(loadingEvent_Speed)
+                            setPanScan(5, 0, loadingEvent_xPos, loadingEvent_yPos, loadingEvent_xZoom, loadingEvent_yZoom)
 
                             If pausePlaybackOnLoadEvent Then
                                 SendMessage(CMD_SEND.CMD_PAUSE) ' pause the playback if you have the preference set to do that
@@ -250,8 +311,8 @@ Public Class mainWindow
                             If waitForSecondTick = 0 Then ' if MPC-HC loaded the file, we want to wait for 2 responses from this message before checking speed
                                 waitForSecondTick = 1 ' skip this time around and wait for the next one
                             ElseIf waitForSecondTick = 1 Then ' OK, we're there, now check the speed
-                                If speedSlider.Value <> 100 Then
-                                    setSpeed(100)
+                                If speedSlider.Value <> defaultSpeed Then
+                                    setSpeed(defaultSpeed)
                                 End If
 
                                 waitForSecondTick = -1 ' reset the variable so we're not checking it again (until the next time we need to)
@@ -496,6 +557,7 @@ Public Class mainWindow
         ' INI values that need to be stored in variables for later use
         Double.TryParse(betweenTheLines(fileReader, "loopPreviewLength=", vbCrLf, "0.25"), loopPreviewLength)
         Double.TryParse(betweenTheLines(fileReader, "loopSlipLength=", vbCrLf, "0.50"), loopSlipLength)
+        Integer.TryParse(betweenTheLines(fileReader, "defaultSpeed=", vbCrLf, "100"), defaultSpeed)
 
         Double.TryParse(betweenTheLines(fileReader, "inPointOffset=", vbCrLf, "0"), inPointOffset)
         Double.TryParse(betweenTheLines(fileReader, "outPointOffset=", vbCrLf, "0.15"), outPointOffset)
@@ -537,6 +599,14 @@ Public Class mainWindow
         Boolean.TryParse(betweenTheLines(fileReader, "disableToolTips=", vbCrLf, "B_False"), disableToolTips)
 
         If disableToolTips = False Then loadToolTips(True) ' really no need to do the check here, this value is the boolean
+
+        ' Check to see if there are any custom hotkeys
+        Dim currentHK As String = Nothing
+
+        For checkHotKey = 100 To 144 Step 1
+            currentHK = betweenTheLines(fileReader, checkHotKey & "=", vbCrLf, "-1") ' check to see if there's an entry for the specific hotkey
+            If currentHK <> "-1" Then hotKeyList(checkHotKey - 100, 1) = currentHK ' if there is, then set it
+        Next
     End Sub
 
     Private Sub loadINIFileForDefaults() ' if we launch defaults at the beginning, then we just need the MPC-HC values, so we can run the program
@@ -587,56 +657,82 @@ Public Class mainWindow
     ' ================= HOTKEY HANDLERS ====================================================
     ' ======================================================================================
 
+    Public Sub assignHotKey(myHandle As IntPtr, myID As Integer)
+        Dim hkMod, hkKey As Integer
+        Dim currentSettings(2) As String
+
+        If hotKeyList(myID - 100, 1) Is Nothing Then
+            currentSettings = Split(hotKeyList(myID - 100, 0), "|")
+        Else
+            currentSettings = Split(hotKeyList(myID - 100, 1), "|")
+        End If
+
+        If currentSettings(0).Contains("C") Then hkMod += KeyModifier.Control
+        If currentSettings(0).Contains("S") Then hkMod += KeyModifier.Shift
+        If currentSettings(0).Contains("A") Then hkMod += KeyModifier.Alt
+
+        hkKey = CType(currentSettings(1), Integer)
+        If hkKey <> 0 Then RegisterHotKey(myHandle, myID, hkMod, hkKey) ' if the Integer conversion worked, then assign the hotkey
+    End Sub
+
     Public Sub setHotKeys(Optional hotKeyID As Integer = -1)
         If disableHotkeys = False Then
             'IN and OUT hotkeys
-            If hotKeyID = -1 Or hotKeyID = 100 Then RegisterHotKey(Me.Handle, 100, KeyModifier.None, Asc("I"))  ' set IN point
-            If hotKeyID = -1 Or hotKeyID = 101 Then RegisterHotKey(Me.Handle, 101, KeyModifier.None, Asc("O"))  ' set OUT point
-            If hotKeyID = -1 Or hotKeyID = 102 Then RegisterHotKey(Me.Handle, 102, KeyModifier.Control, Asc("I"))  ' clear IN point
-            If hotKeyID = -1 Or hotKeyID = 103 Then RegisterHotKey(Me.Handle, 103, KeyModifier.Control, Asc("O"))  ' clear OUT point
-            If hotKeyID = -1 Or hotKeyID = 104 Then RegisterHotKey(Me.Handle, 104, KeyModifier.Control, Asc("X"))  ' clear IN and OUT points
+            If hotKeyID = -1 Or hotKeyID = 100 Then assignHotKey(Me.Handle, 100)  ' set IN point
+            If hotKeyID = -1 Or hotKeyID = 101 Then assignHotKey(Me.Handle, 101)  ' set OUT point
+            If hotKeyID = -1 Or hotKeyID = 102 Then assignHotKey(Me.Handle, 102)  ' clear IN point
+            If hotKeyID = -1 Or hotKeyID = 103 Then assignHotKey(Me.Handle, 103)  ' clear OUT point
+            If hotKeyID = -1 Or hotKeyID = 104 Then assignHotKey(Me.Handle, 104)  ' clear IN and OUT points
 
             ' Trimming IN and OUT
-            If hotKeyID = -1 Or hotKeyID = 110 Then RegisterHotKey(Me.Handle, 110, KeyModifier.None, Keys.OemOpenBrackets)  ' trim the IN point left
-            If hotKeyID = -1 Or hotKeyID = 111 Then RegisterHotKey(Me.Handle, 111, KeyModifier.Shift, Keys.OemOpenBrackets)  ' trim the IN point left by the default value
-
-            If hotKeyID = -1 Or hotKeyID = 112 Then RegisterHotKey(Me.Handle, 112, KeyModifier.None, Keys.OemCloseBrackets)  ' trim the IN point right
-            If hotKeyID = -1 Or hotKeyID = 113 Then RegisterHotKey(Me.Handle, 113, KeyModifier.Shift, Keys.OemCloseBrackets)  ' trim the IN point right by the default value
-
-            If hotKeyID = -1 Or hotKeyID = 114 Then RegisterHotKey(Me.Handle, 114, KeyModifier.None, Keys.OemSemicolon)  ' trim the OUT point left
-            If hotKeyID = -1 Or hotKeyID = 115 Then RegisterHotKey(Me.Handle, 115, KeyModifier.Shift, Keys.OemSemicolon)  ' trim the OUT point left by the default value
-
-            If hotKeyID = -1 Or hotKeyID = 116 Then RegisterHotKey(Me.Handle, 116, KeyModifier.None, Keys.OemQuotes)  ' trim the OUT point right
-            If hotKeyID = -1 Or hotKeyID = 117 Then RegisterHotKey(Me.Handle, 117, KeyModifier.Shift, Keys.OemQuotes)  ' trim the OUT point right by the default value
+            If hotKeyID = -1 Or hotKeyID = 105 Then assignHotKey(Me.Handle, 105)  ' trim the IN point left
+            If hotKeyID = -1 Or hotKeyID = 106 Then assignHotKey(Me.Handle, 106)  ' trim the IN point left by the default value
+            If hotKeyID = -1 Or hotKeyID = 107 Then assignHotKey(Me.Handle, 107)  ' trim the IN point right
+            If hotKeyID = -1 Or hotKeyID = 108 Then assignHotKey(Me.Handle, 108)  ' trim the IN point right by the default value
+            If hotKeyID = -1 Or hotKeyID = 109 Then assignHotKey(Me.Handle, 109)  ' trim the OUT point left
+            If hotKeyID = -1 Or hotKeyID = 110 Then assignHotKey(Me.Handle, 110)  ' trim the OUT point left by the default value
+            If hotKeyID = -1 Or hotKeyID = 111 Then assignHotKey(Me.Handle, 111)  ' trim the OUT point right
+            If hotKeyID = -1 Or hotKeyID = 112 Then assignHotKey(Me.Handle, 112)  ' trim the OUT point right by the default value
 
             ' GUI hotkeys
-            If hotKeyID = -1 Or hotKeyID = 120 Then RegisterHotKey(Me.Handle, 120, KeyModifier.Shift, Asc("L"))  ' change loop mode
-            If hotKeyID = -1 Or hotKeyID = 121 Then RegisterHotKey(Me.Handle, 121, KeyModifier.Control, Asc("1"))  ' change loop mode to OFF
-            If hotKeyID = -1 Or hotKeyID = 122 Then RegisterHotKey(Me.Handle, 122, KeyModifier.Control, Asc("2"))  ' change loop mode to LOOP MODE
-            If hotKeyID = -1 Or hotKeyID = 123 Then RegisterHotKey(Me.Handle, 123, KeyModifier.Control, Asc("3"))  ' change loop mode to PLAYLIST MODE
-            If hotKeyID = -1 Or hotKeyID = 124 Then RegisterHotKey(Me.Handle, 124, KeyModifier.Control, Asc("4"))  ' change loop mode to SHUFFLE MODE
+            If hotKeyID = -1 Or hotKeyID = 113 Then assignHotKey(Me.Handle, 113)  ' change loop mode
+            If hotKeyID = -1 Or hotKeyID = 114 Then assignHotKey(Me.Handle, 114)  ' change loop mode to OFF
+            If hotKeyID = -1 Or hotKeyID = 115 Then assignHotKey(Me.Handle, 115)  ' change loop mode to LOOP MODE
+            If hotKeyID = -1 Or hotKeyID = 116 Then assignHotKey(Me.Handle, 116)  ' change loop mode to PLAYLIST MODE
+            If hotKeyID = -1 Or hotKeyID = 117 Then assignHotKey(Me.Handle, 117)  ' change loop mode to SHUFFLE MODE
 
-            If hotKeyID = -1 Or hotKeyID = 125 Then RegisterHotKey(Me.Handle, 125, KeyModifier.Control, Asc("T"))  ' change always on top setting
-            If hotKeyID = -1 Or hotKeyID = 126 Then RegisterHotKey(Me.Handle, 126, KeyModifier.Control, Asc("Q"))  ' quit MPC-HC Looper
-            If hotKeyID = -1 Or hotKeyID = 127 Then RegisterHotKey(Me.Handle, 127, KeyModifier.Control, Keys.Oemcomma)  ' load options pane
-            If hotKeyID = -1 Or hotKeyID = 128 Then RegisterHotKey(Me.Handle, 128, KeyModifier.Alt, Keys.Home)  ' open path to file in Explorer
+            If hotKeyID = -1 Or hotKeyID = 118 Then assignHotKey(Me.Handle, 118)  ' change always on top setting
+            If hotKeyID = -1 Or hotKeyID = 119 Then assignHotKey(Me.Handle, 119)  ' quit MPC-HC Looper
+            If hotKeyID = -1 Or hotKeyID = 120 Then assignHotKey(Me.Handle, 120)  ' load options pane
+            If hotKeyID = -1 Or hotKeyID = 121 Then assignHotKey(Me.Handle, 121)  ' open path to file in Explorer
 
             ' Working with events
-            If hotKeyID = -1 Or hotKeyID = 129 Then RegisterHotKey(Me.Handle, 129, KeyModifier.Control, Asc("N")) ' create new event
-            If hotKeyID = -1 Or hotKeyID = 130 Then RegisterHotKey(Me.Handle, 130, KeyModifier.None, Keys.Delete) ' delete currently selected event(s)
-            If hotKeyID = -1 Or hotKeyID = 131 Then RegisterHotKey(Me.Handle, 131, KeyModifier.Control, Asc("S")) ' save current events list (overwrite)
-            If hotKeyID = -1 Or hotKeyID = 132 Then RegisterHotKey(Me.Handle, 132, KeyModifier.Control + KeyModifier.Shift, Asc("S")) ' save the selected items as a new Looper file
-            If hotKeyID = -1 Or hotKeyID = 133 Then RegisterHotKey(Me.Handle, 133, KeyModifier.Control, Asc("L")) ' load new events list
-            If hotKeyID = -1 Or hotKeyID = 134 Then RegisterHotKey(Me.Handle, 134, KeyModifier.Control + KeyModifier.Shift, Asc("L")) ' import .looper file into the current events list
-            If hotKeyID = -1 Or hotKeyID = 135 Then RegisterHotKey(Me.Handle, 135, KeyModifier.Control, Keys.PageUp) ' go to one event prior in the events list
-            If hotKeyID = -1 Or hotKeyID = 136 Then RegisterHotKey(Me.Handle, 136, KeyModifier.Control, Keys.PageDown) ' go to one event next in the events list
-            If hotKeyID = -1 Or hotKeyID = 137 Then RegisterHotKey(Me.Handle, 137, KeyModifier.Control, Keys.Up) ' Speed up playback in MPC-HC
-            If hotKeyID = -1 Or hotKeyID = 138 Then RegisterHotKey(Me.Handle, 138, KeyModifier.Control, Keys.Down) ' Slow down playback in MPC-HC
-            If hotKeyID = -1 Or hotKeyID = 139 Then RegisterHotKey(Me.Handle, 139, KeyModifier.Control, Asc("R")) ' Reset speed to 100% in MPC-HC
-            If hotKeyID = -1 Or hotKeyID = 140 Then RegisterHotKey(Me.Handle, 140, KeyModifier.Control, Asc("F")) ' Go to the Search field of the Playlist window
+            If hotKeyID = -1 Or hotKeyID = 122 Then assignHotKey(Me.Handle, 122) ' create new event
+            If hotKeyID = -1 Or hotKeyID = 123 Then assignHotKey(Me.Handle, 123) ' delete currently selected event(s)
+            If hotKeyID = -1 Or hotKeyID = 124 Then assignHotKey(Me.Handle, 124) ' save current events list (overwrite)
+            If hotKeyID = -1 Or hotKeyID = 125 Then assignHotKey(Me.Handle, 125) ' save the selected items as a new Looper file
+            If hotKeyID = -1 Or hotKeyID = 126 Then assignHotKey(Me.Handle, 126) ' load new events list
+            If hotKeyID = -1 Or hotKeyID = 127 Then assignHotKey(Me.Handle, 127) ' import .looper file into the current events list
+            If hotKeyID = -1 Or hotKeyID = 128 Then assignHotKey(Me.Handle, 128) ' go to one event prior in the events list
+            If hotKeyID = -1 Or hotKeyID = 129 Then assignHotKey(Me.Handle, 129) ' go to one event next in the events list
+            If hotKeyID = -1 Or hotKeyID = 130 Then assignHotKey(Me.Handle, 130) ' Speed up playback in MPC-HC
+            If hotKeyID = -1 Or hotKeyID = 131 Then assignHotKey(Me.Handle, 131) ' Slow down playback in MPC-HC
+            If hotKeyID = -1 Or hotKeyID = 132 Then assignHotKey(Me.Handle, 132) ' Reset speed to default speed in MPC-HC
 
-            If hotKeyID = -1 Or hotKeyID = 141 Then RegisterHotKey(Me.Handle, 141, KeyModifier.Control, Asc("A")) ' Select ALL the events in the events list
-            If hotKeyID = -1 Or hotKeyID = 142 Then RegisterHotKey(Me.Handle, 142, KeyModifier.Control + KeyModifier.Shift, Asc("D")) ' Select NONE of the events in the events list
+            If hotKeyID = -1 Or hotKeyID = 133 Then assignHotKey(Me.Handle, 133) ' Go to the Search field of the Playlist window
+            If hotKeyID = -1 Or hotKeyID = 134 Then assignHotKey(Me.Handle, 134) ' Select ALL the events in the events list
+            If hotKeyID = -1 Or hotKeyID = 135 Then assignHotKey(Me.Handle, 135) ' Select NONE of the events in the events list
+
+            ' Pan and Scan controls
+            If hotKeyID = -1 Or hotKeyID = 136 Then assignHotKey(Me.Handle, 136) ' Zoom Out on the X Axis
+            If hotKeyID = -1 Or hotKeyID = 137 Then assignHotKey(Me.Handle, 137) ' Zoom In on the X Axis
+            If hotKeyID = -1 Or hotKeyID = 138 Then assignHotKey(Me.Handle, 138) ' Zoom Out on the Y Axis
+            If hotKeyID = -1 Or hotKeyID = 139 Then assignHotKey(Me.Handle, 139) ' Zoom In on the Y Axis
+            If hotKeyID = -1 Or hotKeyID = 140 Then assignHotKey(Me.Handle, 140) ' Reset Pan and Scan to defaults
+            If hotKeyID = -1 Or hotKeyID = 141 Then assignHotKey(Me.Handle, 141) ' Move Video to the Left
+            If hotKeyID = -1 Or hotKeyID = 142 Then assignHotKey(Me.Handle, 142) ' Move Video to the Right
+            If hotKeyID = -1 Or hotKeyID = 143 Then assignHotKey(Me.Handle, 143) ' Move Video Up
+            If hotKeyID = -1 Or hotKeyID = 144 Then assignHotKey(Me.Handle, 144) ' Move Video Down
 
             If hotKeyID = -1 Then
                 hotkeysTF.Text = "HOTKEYS ON"
@@ -654,41 +750,51 @@ Public Class mainWindow
             If hotKeyID = -1 Or hotKeyID = 103 Then UnregisterHotKey(Me.Handle, 103) ' clear OUT point
             If hotKeyID = -1 Or hotKeyID = 104 Then UnregisterHotKey(Me.Handle, 104) ' clear IN and OUT points
 
-            If hotKeyID = -1 Or hotKeyID = 110 Then UnregisterHotKey(Me.Handle, 110) ' trim the IN point left
-            If hotKeyID = -1 Or hotKeyID = 111 Then UnregisterHotKey(Me.Handle, 111) ' trim the IN point left by the default value
-            If hotKeyID = -1 Or hotKeyID = 112 Then UnregisterHotKey(Me.Handle, 112) ' trim the IN point right
-            If hotKeyID = -1 Or hotKeyID = 113 Then UnregisterHotKey(Me.Handle, 113) ' trim the IN point right by the default value
-            If hotKeyID = -1 Or hotKeyID = 114 Then UnregisterHotKey(Me.Handle, 114) ' trim the OUT point left
-            If hotKeyID = -1 Or hotKeyID = 115 Then UnregisterHotKey(Me.Handle, 115) ' trim the OUT point left by the default value
-            If hotKeyID = -1 Or hotKeyID = 116 Then UnregisterHotKey(Me.Handle, 116) ' trim the OUT point right
-            If hotKeyID = -1 Or hotKeyID = 117 Then UnregisterHotKey(Me.Handle, 117) ' trim the OUT point right by the default value
+            If hotKeyID = -1 Or hotKeyID = 110 Then UnregisterHotKey(Me.Handle, 105) ' trim the IN point left
+            If hotKeyID = -1 Or hotKeyID = 111 Then UnregisterHotKey(Me.Handle, 106) ' trim the IN point left by the default value
+            If hotKeyID = -1 Or hotKeyID = 112 Then UnregisterHotKey(Me.Handle, 107) ' trim the IN point right
+            If hotKeyID = -1 Or hotKeyID = 113 Then UnregisterHotKey(Me.Handle, 108) ' trim the IN point right by the default value
+            If hotKeyID = -1 Or hotKeyID = 114 Then UnregisterHotKey(Me.Handle, 109) ' trim the OUT point left
+            If hotKeyID = -1 Or hotKeyID = 115 Then UnregisterHotKey(Me.Handle, 110) ' trim the OUT point left by the default value
+            If hotKeyID = -1 Or hotKeyID = 116 Then UnregisterHotKey(Me.Handle, 111) ' trim the OUT point right
+            If hotKeyID = -1 Or hotKeyID = 117 Then UnregisterHotKey(Me.Handle, 112) ' trim the OUT point right by the default value
 
-            If hotKeyID = -1 Or hotKeyID = 120 Then UnregisterHotKey(Me.Handle, 120) ' change loop mode
-            If hotKeyID = -1 Or hotKeyID = 121 Then UnregisterHotKey(Me.Handle, 121) ' change loop mode to OFF
-            If hotKeyID = -1 Or hotKeyID = 122 Then UnregisterHotKey(Me.Handle, 122) ' change loop mode to LOOP MODE
-            If hotKeyID = -1 Or hotKeyID = 123 Then UnregisterHotKey(Me.Handle, 123) ' change loop mode to PLAYLIST MODE
-            If hotKeyID = -1 Or hotKeyID = 124 Then UnregisterHotKey(Me.Handle, 124) ' change loop mode to SHUFFLE MODE
+            If hotKeyID = -1 Or hotKeyID = 120 Then UnregisterHotKey(Me.Handle, 113) ' change loop mode
+            If hotKeyID = -1 Or hotKeyID = 121 Then UnregisterHotKey(Me.Handle, 114) ' change loop mode to OFF
+            If hotKeyID = -1 Or hotKeyID = 122 Then UnregisterHotKey(Me.Handle, 115) ' change loop mode to LOOP MODE
+            If hotKeyID = -1 Or hotKeyID = 123 Then UnregisterHotKey(Me.Handle, 116) ' change loop mode to PLAYLIST MODE
+            If hotKeyID = -1 Or hotKeyID = 124 Then UnregisterHotKey(Me.Handle, 117) ' change loop mode to SHUFFLE MODE
 
-            If hotKeyID = -1 Or hotKeyID = 125 Then UnregisterHotKey(Me.Handle, 125) ' change always on top setting
-            If hotKeyID = -1 Or hotKeyID = 126 Then UnregisterHotKey(Me.Handle, 126) ' quit MPC-HC Looper
-            If hotKeyID = -1 Or hotKeyID = 127 Then UnregisterHotKey(Me.Handle, 127) ' load options pane
-            If hotKeyID = -1 Or hotKeyID = 128 Then UnregisterHotKey(Me.Handle, 128) ' open path to file in Explorer
+            If hotKeyID = -1 Or hotKeyID = 125 Then UnregisterHotKey(Me.Handle, 118) ' change always on top setting
+            If hotKeyID = -1 Or hotKeyID = 126 Then UnregisterHotKey(Me.Handle, 119) ' quit MPC-HC Looper
+            If hotKeyID = -1 Or hotKeyID = 127 Then UnregisterHotKey(Me.Handle, 120) ' load options pane
+            If hotKeyID = -1 Or hotKeyID = 128 Then UnregisterHotKey(Me.Handle, 121) ' open path to file in Explorer
 
-            If hotKeyID = -1 Or hotKeyID = 129 Then UnregisterHotKey(Me.Handle, 129) ' create new event
-            If hotKeyID = -1 Or hotKeyID = 130 Then UnregisterHotKey(Me.Handle, 130) ' delete currently selected event(s)
-            If hotKeyID = -1 Or hotKeyID = 131 Then UnregisterHotKey(Me.Handle, 131) ' save current events list
-            If hotKeyID = -1 Or hotKeyID = 132 Then UnregisterHotKey(Me.Handle, 132) ' save the selected items as a new Looper file
-            If hotKeyID = -1 Or hotKeyID = 133 Then UnregisterHotKey(Me.Handle, 133) ' load new events list
-            If hotKeyID = -1 Or hotKeyID = 134 Then UnregisterHotKey(Me.Handle, 134) ' import .looper file into the current events list
-            If hotKeyID = -1 Or hotKeyID = 135 Then UnregisterHotKey(Me.Handle, 135) ' go to one event prior in the events list
-            If hotKeyID = -1 Or hotKeyID = 136 Then UnregisterHotKey(Me.Handle, 136) ' go to one event next in the events list
-            If hotKeyID = -1 Or hotKeyID = 137 Then UnregisterHotKey(Me.Handle, 137) ' Speed up playback in MPC-HC
-            If hotKeyID = -1 Or hotKeyID = 138 Then UnregisterHotKey(Me.Handle, 138) ' Slow down playback in MPC-HC
-            If hotKeyID = -1 Or hotKeyID = 139 Then UnregisterHotKey(Me.Handle, 139) ' Reset speed to 100% in MPC-HC
-            If hotKeyID = -1 Or hotKeyID = 140 Then UnregisterHotKey(Me.Handle, 140) ' Go to the Search field of the Playlist window
+            If hotKeyID = -1 Or hotKeyID = 129 Then UnregisterHotKey(Me.Handle, 122) ' create new event
+            If hotKeyID = -1 Or hotKeyID = 130 Then UnregisterHotKey(Me.Handle, 123) ' delete currently selected event(s)
+            If hotKeyID = -1 Or hotKeyID = 131 Then UnregisterHotKey(Me.Handle, 124) ' save current events list
+            If hotKeyID = -1 Or hotKeyID = 132 Then UnregisterHotKey(Me.Handle, 125) ' save the selected items as a new Looper file
+            If hotKeyID = -1 Or hotKeyID = 133 Then UnregisterHotKey(Me.Handle, 126) ' load new events list
+            If hotKeyID = -1 Or hotKeyID = 134 Then UnregisterHotKey(Me.Handle, 127) ' import .looper file into the current events list
+            If hotKeyID = -1 Or hotKeyID = 135 Then UnregisterHotKey(Me.Handle, 128) ' go to one event prior in the events list
+            If hotKeyID = -1 Or hotKeyID = 136 Then UnregisterHotKey(Me.Handle, 129) ' go to one event next in the events list
+            If hotKeyID = -1 Or hotKeyID = 137 Then UnregisterHotKey(Me.Handle, 130) ' Speed up playback in MPC-HC
+            If hotKeyID = -1 Or hotKeyID = 138 Then UnregisterHotKey(Me.Handle, 131) ' Slow down playback in MPC-HC
+            If hotKeyID = -1 Or hotKeyID = 139 Then UnregisterHotKey(Me.Handle, 132) ' Reset speed to 100% in MPC-HC
+            If hotKeyID = -1 Or hotKeyID = 140 Then UnregisterHotKey(Me.Handle, 133) ' Go to the Search field of the Playlist window
 
-            If hotKeyID = -1 Or hotKeyID = 141 Then UnregisterHotKey(Me.Handle, 141) ' Select ALL the events in the events list
-            If hotKeyID = -1 Or hotKeyID = 142 Then UnregisterHotKey(Me.Handle, 142) ' Select NONE of the events in the events list
+            If hotKeyID = -1 Or hotKeyID = 141 Then UnregisterHotKey(Me.Handle, 134) ' Select ALL the events in the events list
+            If hotKeyID = -1 Or hotKeyID = 142 Then UnregisterHotKey(Me.Handle, 135) ' Select NONE of the events in the events list
+
+            If hotKeyID = -1 Or hotKeyID = 150 Then UnregisterHotKey(Me.Handle, 136) ' Zoom Out on the X Axis
+            If hotKeyID = -1 Or hotKeyID = 151 Then UnregisterHotKey(Me.Handle, 137) ' Zoom In on the X Axis
+            If hotKeyID = -1 Or hotKeyID = 152 Then UnregisterHotKey(Me.Handle, 138) ' Zoom Out on the Y Axis
+            If hotKeyID = -1 Or hotKeyID = 153 Then UnregisterHotKey(Me.Handle, 139) ' Zoom In on the Y Axis
+            If hotKeyID = -1 Or hotKeyID = 154 Then UnregisterHotKey(Me.Handle, 140) ' Reset Pan and Scan to defaults
+            If hotKeyID = -1 Or hotKeyID = 155 Then UnregisterHotKey(Me.Handle, 141) ' Move Video to the Left
+            If hotKeyID = -1 Or hotKeyID = 156 Then UnregisterHotKey(Me.Handle, 142) ' Move Video to the Right
+            If hotKeyID = -1 Or hotKeyID = 157 Then UnregisterHotKey(Me.Handle, 143) ' Move Video Up
+            If hotKeyID = -1 Or hotKeyID = 158 Then UnregisterHotKey(Me.Handle, 144) ' Move Video Down
 
             hotkeysTF.Text = "HOTKEYS OFF"
             hotkeysTF.ForeColor = Color.Red
@@ -718,69 +824,69 @@ Public Class mainWindow
                 If getMode() Then clearInPoint()
                 If getMode() Then clearOutPoint()
 
-            Case 110 ' trim the IN point left
+            Case 105 ' trim the IN point left
                 If getMode() Then slipPoint(1)
-            Case 111 ' trim the IN point left by the default value
+            Case 106 ' trim the IN point left by the default value
                 If getMode() Then slipPoint(1, 0.05)
-            Case 112 ' trim the IN point right
+            Case 107 ' trim the IN point right
                 If getMode() Then slipPoint(2)
-            Case 113 ' trim the IN point right by the default value
+            Case 108 ' trim the IN point right by the default value
                 If getMode() Then slipPoint(2, 0.05)
-            Case 114 ' trim the OUT point left
+            Case 109 ' trim the OUT point left
                 If getMode() Then slipPoint(3)
-            Case 115 ' trim the OUT point left by the default value
+            Case 110 ' trim the OUT point left by the default value
                 If getMode() Then slipPoint(3, 0.05)
-            Case 116 ' trim the OUT point right
+            Case 111 ' trim the OUT point right
                 If getMode() Then slipPoint(4)
-            Case 117 ' trim the OUT point right by the default value
+            Case 112 ' trim the OUT point right by the default value
                 If getMode() Then slipPoint(4, 0.05)
 
-            Case 120 ' change loop mode
+            Case 113 ' change loop mode
                 switchLoopMode()
-            Case 121 ' change loop mode to OFF
+            Case 114 ' change loop mode to OFF
                 switchToOffMode()
-            Case 122 ' change loop mode to LOOP MODE
+            Case 115 ' change loop mode to LOOP MODE
                 switchToLoopMode()
-            Case 123 ' change loop mode to PLAYLIST MODE
+            Case 116 ' change loop mode to PLAYLIST MODE
                 switchToPlaylistMode()
-            Case 124 ' change loop mode to SHUFFLE MODE
+            Case 117 ' change loop mode to SHUFFLE MODE
                 switchToShuffleMode()
 
-            Case 125 ' change always on top setting
+            Case 118 ' change always on top setting
                 changeAlwaysOnTop()
-            Case 126 ' quit MPC-HC Looper
+            Case 119 ' quit MPC-HC Looper
                 Me.Close()
-            Case 127 ' load options pane
+            Case 120 ' load options pane
                 optionsWindow.ShowDialog()
-            Case 128 ' open path to file in Explorer
+            Case 121 ' open path to file in Explorer
                 showFileInExplorer()
 
-            Case 129 ' create new event
+            Case 122 ' create new event
                 If getMode() Then playlistWindow.addEvent()
-            Case 130 ' delete currently selected event(s)
+            Case 123 ' delete currently selected event(s)
                 If getMode() Then playlistWindow.deleteEvents()
-            Case 131 ' save current events list
+            Case 124 ' save current events list
                 If getMode() Then playlistWindow.saveLooperFile()
-            Case 132 ' save the selected items as a new Looper file
+            Case 125 ' save the selected items as a new Looper file
                 playlistWindow.saveLooperFile(True)
-            Case 133 ' load new events list
+            Case 126 ' load new events list
                 playlistWindow.loadLooperFile()
-            Case 134 ' import .looper file into the current events list
+            Case 127 ' import .looper file into the current events list
                 playlistWindow.loadLooperFile(False)
-            Case 135 ' go to one event prior in the events list
+            Case 128 ' go to one event prior in the events list
                 playlistWindow.loadPrevNextEvent(-1)
-            Case 136 ' go to one event next in the events list
+            Case 129 ' go to one event next in the events list
                 playlistWindow.loadPrevNextEvent(1)
-            Case 137 ' Speed up playback in MPC-HC
+            Case 130 ' Speed up playback in MPC-HC
                 If getMode() Then setSpeed(speedSlider.Value + 10)
-            Case 138 ' Slow down playback in MPC-HC
+            Case 131 ' Slow down playback in MPC-HC
                 If getMode() Then setSpeed(speedSlider.Value - 10)
-            Case 139 ' Reset speed to 100% in MPC-HC
-                If getMode() Then setSpeed(100)
-            Case 140 ' Go to the Search field of the Playlist window
+            Case 132 ' Reset speed to 100% in MPC-HC
+                If getMode() Then setSpeed(defaultSpeed)
+            Case 133 ' Go to the Search field of the Playlist window
                 playlistWindow.searchTF.Select()
 
-            Case 141 ' Select ALL the events in the events list
+            Case 134 ' Select ALL the events in the events list
                 If playlistWindow.eventsList.Items.Count > 0 Then
                     playlistWindow.eventsList.BeginUpdate()
 
@@ -790,7 +896,7 @@ Public Class mainWindow
 
                     playlistWindow.eventsList.EndUpdate()
                 End If
-            Case 142 ' Select NONE of the events in the events list
+            Case 135 ' Select NONE of the events in the events list
                 If playlistWindow.eventsList.Items.Count > 0 Then
                     playlistWindow.eventsList.BeginUpdate()
 
@@ -800,6 +906,25 @@ Public Class mainWindow
 
                     playlistWindow.eventsList.EndUpdate()
                 End If
+
+            Case 136 ' zoom OUT on the X axis
+                setPanScan(1, -0.05)
+            Case 137 ' zoom IN on the X axis
+                setPanScan(1, 0.05)
+            Case 138 ' zoom OUT on the Y axis
+                setPanScan(2, -0.05)
+            Case 139 ' zoom IN on the Y axis
+                setPanScan(2, 0.05)
+            Case 140 ' set pan and scan back to default settings
+                setPanScan(5, 0)
+            Case 141 ' move the video to the left
+                setPanScan(3, 0.005)
+            Case 142 ' move the video to the right
+                setPanScan(3, -0.005)
+            Case 143 ' move the video up
+                setPanScan(4, 0.005)
+            Case 144 ' move the video down
+                setPanScan(4, -0.005)
         End Select
     End Sub
 
@@ -1248,5 +1373,141 @@ Public Class mainWindow
 
     Private Sub speed200Button_Click(sender As Object, e As EventArgs) Handles speed200Button.Click
         setSpeed(200)
+    End Sub
+
+    ' ======================================================================================
+    ' ================= PAN AND SCAN HANDLERS ==============================================
+    ' ======================================================================================
+
+    Private Sub xPosTF_KeyDown(sender As Object, e As KeyEventArgs) Handles xPosTF.KeyDown
+        If e.KeyCode = Keys.Enter Then
+            Dim testValue As Double
+            Double.TryParse(xPosTF.Text, testValue)
+
+            setPanScan(5, 0, testValue, yPos, xZoom, yZoom)
+
+            ' cancel the ENTER event and clear focus
+            e.Handled = True
+            e.SuppressKeyPress = True
+            Me.ActiveControl = Nothing
+        End If
+    End Sub
+
+    Private Sub yPosTF_KeyDown(sender As Object, e As KeyEventArgs) Handles yPosTF.KeyDown
+        If e.KeyCode = Keys.Enter Then
+            Dim testValue As Double
+            Double.TryParse(yPosTF.Text, testValue)
+
+            setPanScan(5, 0, xPos, testValue, xZoom, yZoom)
+
+            ' cancel the ENTER event and clear focus
+            e.Handled = True
+            e.SuppressKeyPress = True
+            Me.ActiveControl = Nothing
+        End If
+    End Sub
+
+    Private Sub xZoomTF_KeyDown(sender As Object, e As KeyEventArgs) Handles xZoomTF.KeyDown
+        If e.KeyCode = Keys.Enter Then
+            Dim testValue As Double
+            Double.TryParse(xZoomTF.Text, testValue)
+
+            If zoomAxesLinkButton.Checked = True Then
+                setPanScan(5, 0, xPos, yPos, testValue, testValue)
+            Else
+                setPanScan(5, 0, xPos, yPos, testValue, yZoom)
+            End If
+
+            ' cancel the ENTER event and clear focus
+            e.Handled = True
+            e.SuppressKeyPress = True
+            Me.ActiveControl = Nothing
+        End If
+    End Sub
+
+    Private Sub yZoomTF_KeyDown(sender As Object, e As KeyEventArgs) Handles yZoomTF.KeyDown
+        If e.KeyCode = Keys.Enter Then
+            Dim testValue As Double
+            Double.TryParse(yZoomTF.Text, testValue)
+
+            If zoomAxesLinkButton.Checked = True Then
+                setPanScan(5, 0, xPos, yPos, testValue, testValue)
+            Else
+                setPanScan(5, 0, xPos, yPos, xZoom, testValue)
+            End If
+
+            ' cancel the ENTER event and clear focus
+            e.Handled = True
+            e.SuppressKeyPress = True
+            Me.ActiveControl = Nothing
+        End If
+    End Sub
+
+    Public Sub setPanScan(typeOfMove As Integer, theAmount As Double,
+                          Optional customPosX As Double = 0.5, Optional customPosY As Double = 0.5,
+                          Optional customZoomX As Double = 1, Optional customZoomY As Double = 1)
+
+        If typeOfMove = 1 Then ' we're adjusting the zoom for the X axis
+            If xZoom + theAmount > 0.2 And xZoom + theAmount < 5 Then xZoom += theAmount
+
+            If zoomAxesLinkButton.Checked = True Then
+                If yZoom + theAmount > 0.2 And yZoom + theAmount < 5 Then yZoom += theAmount
+            End If
+        ElseIf typeOfMove = 2 Then ' we're adjusting the zoom for the Y axis
+            If yZoom + theAmount > 0.2 And yZoom + theAmount < 5 Then yZoom += theAmount
+
+            If zoomAxesLinkButton.Checked = True Then
+                If xZoom + theAmount > 0.2 And xZoom + theAmount < 5 Then xZoom += theAmount
+            End If
+        ElseIf typeOfMove = 3 Then ' we're moving the X axis
+            If xZoom > 1 Then theAmount *= (xZoom * 1.5)
+            If xPos + theAmount > -0.5 And xPos + theAmount < 1.5 Then xPos += theAmount
+        ElseIf typeOfMove = 4 Then ' we're moving the Y axis
+            If yZoom > 1 Then theAmount *= (yZoom * 1.5)
+            If yPos + theAmount > -0.5 And yPos + theAmount < 1.5 Then yPos += theAmount
+        ElseIf typeOfMove = 5 Then ' we're setting up a custom pan/scan setting, or resetting to defaults
+            If customPosX > -0.5 And customPosX < 1.5 Then
+                xPos = customPosX
+            ElseIf customPosX < -0.5 Then
+                xPos = -0.5
+            ElseIf customPosX > 1.5 Then
+                xPos = 1.5
+            End If
+
+            If customPosY > -0.5 And customPosY < 1.5 Then
+                yPos = customPosY
+            ElseIf customPosY < -0.5 Then
+                yPos = -0.5
+            ElseIf customPosY > 1.5 Then
+                yPos = 1.5
+            End If
+
+            If customZoomX <> 0 Then
+                If customZoomX > 0.2 And customZoomX < 5 Then
+                    xZoom = customZoomX
+                ElseIf customZoomX < 0.2 Then
+                    xZoom = 0.2
+                ElseIf customZoomX > 5 Then
+                    xZoom = 5
+                End If
+            End If
+
+            If customZoomY <> 0 Then
+                If customZoomY > 0.2 And customZoomY < 5 Then
+                    yZoom = customZoomY
+                ElseIf customZoomY < 0.2 Then
+                    yZoom = 0.2
+                ElseIf customZoomY > 5 Then
+                    yZoom = 5
+                End If
+            End If
+        End If
+
+        xPosTF.Text = xPos.ToString("N3")
+        yPosTF.Text = yPos.ToString("N3")
+        xZoomTF.Text = xZoom.ToString("N3")
+        yZoomTF.Text = yZoom.ToString("N3")
+
+        SendMessage(CMD_SEND.CMD_SETPANSCAN, xPos.ToString("N3") & "," & yPos.ToString("N3") & "," & xZoom.ToString("N3") & "," & yZoom.ToString("N3"))
     End Sub
 End Class

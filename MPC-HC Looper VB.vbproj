@@ -124,6 +124,12 @@
     <Compile Include="findLooperWindow.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="hotKeySettings.Designer.vb">
+      <DependentUpon>hotKeySettings.vb</DependentUpon>
+    </Compile>
+    <Compile Include="hotKeySettings.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="MPC_Enum.vb" />
     <Compile Include="My Project\Resources.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -172,6 +178,9 @@
     <EmbeddedResource Include="findLooperWindow.resx">
       <DependentUpon>findLooperWindow.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="hotKeySettings.resx">
+      <DependentUpon>hotKeySettings.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="optionsWindow.resx">
       <DependentUpon>optionsWindow.vb</DependentUpon>
     </EmbeddedResource>
@@ -192,7 +201,6 @@
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>
     </None>
-    <None Include="MPC-HC Looper VB_TemporaryKey.pfx" />
     <None Include="My Project\app.manifest" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
@@ -204,7 +212,6 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="App.config" />
-    <None Include="ZG_CS_t2.pfx" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
@@ -238,8 +245,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>cscript C:\Users\ZachGlenwright\Documents\Pre-Compile.vbs</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>
