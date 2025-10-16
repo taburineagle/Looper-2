@@ -1,4 +1,5 @@
-﻿Imports System.Runtime.InteropServices
+﻿Imports System.Globalization
+Imports System.Runtime.InteropServices
 Imports System.Threading
 
 ' MPC-HC Looper VB - Looper re-written in Visual Basic
@@ -347,6 +348,9 @@ Public Class mainWindow
     ' ======================================================================================
 
     Private Sub mainWindow_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture
+        CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture
+
         Me.Hide() ' hide the window on boot, so moving it to its final destination is done in the background
         Me.Icon = My.Resources.icon ' Set the Form icon to the main program icon
         Me.MaximizeBox = False ' Disable the Maximize box
