@@ -720,7 +720,18 @@
 
             eventsList.ListViewItemSorter = Nothing ' add the event at the very end of the list if the list is sorted
 
-            Dim newEvent = returnListViewItem(mainWindow.newEventString, mainWindow.speedSlider.Value.ToString, "1", mainWindow.inTF.Text, mainWindow.outTF.Text,
+            ' Filename/Event Number Substitution (suggestion by @inBytes on GitHub) - for example, having:
+            ' "[#]_[[F]] New Event" as the default name will make events called
+            ' "1_[file.mp4] New Event" as the 1st event in the list
+            ' "2_[file.mp4] New Event" as the 2nd event in the list, etc.
+
+            ' replace [F] with the currently playing file's filename
+            Dim newEventName As String = Replace(mainWindow.newEventString, "[F]", System.IO.Path.GetFileName(mainWindow.currentPlayingFile))
+            ' replace [#] with the current # in the events list
+            newEventName = Replace(newEventName, "[#]", (eventsList.Items.Count + 1).ToString())
+
+            ' add the event to the events list
+            Dim newEvent = returnListViewItem(newEventName, mainWindow.speedSlider.Value.ToString, "1", mainWindow.inTF.Text, mainWindow.outTF.Text,
                                               mainWindow.currentPlayingFile, mainWindow.xPosTF.Text, mainWindow.yPosTF.Text, mainWindow.xZoomTF.Text, mainWindow.yZoomTF.Text)
             Dim newIndex As Integer
 
@@ -1353,9 +1364,8 @@
         If Not (SelectedLSI Is Nothing) Then
             SelectedLSI.Text = listViewEditor.Text
             setIsModified(1) ' if we changed the value of one of the event list's names or loops, then mark it as being modified
+            If mainWindow.autoPlayDialogs = True Then mainWindow.SendMessage(CMD_SEND.CMD_PLAY) ' we cancelled or finished editing text, so resume playback
         End If
-
-        If mainWindow.autoPlayDialogs = True Then mainWindow.SendMessage(CMD_SEND.CMD_PLAY) ' we cancelled or finished editing text, so resume playback
 
         SelectedLSI = Nothing
         listViewEditor.Text = Nothing

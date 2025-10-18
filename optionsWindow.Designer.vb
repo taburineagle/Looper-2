@@ -470,6 +470,7 @@ Partial Class optionsWindow
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "optionsWindow"
+        Me.ShowInTaskbar = False
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Looper 2 Preferences"
         Me.TopMost = True

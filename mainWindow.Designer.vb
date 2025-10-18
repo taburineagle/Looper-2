@@ -517,7 +517,7 @@ Partial Class mainWindow
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(565, 187)
+        Me.ClientSize = New System.Drawing.Size(568, 187)
         Me.Controls.Add(Me.zoomAxesLinkButton)
         Me.Controls.Add(Me.yPosTF)
         Me.Controls.Add(Me.yPosLabel)
@@ -561,8 +561,8 @@ Partial Class mainWindow
         Me.Controls.Add(Me.loopModeButton)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
         Me.Location = New System.Drawing.Point(20, 20)
-        Me.MaximumSize = New System.Drawing.Size(581, 226)
-        Me.MinimumSize = New System.Drawing.Size(581, 226)
+        Me.MaximumSize = New System.Drawing.Size(584, 226)
+        Me.MinimumSize = New System.Drawing.Size(584, 226)
         Me.Name = "mainWindow"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.Manual
         Me.Text = "mainWindow"

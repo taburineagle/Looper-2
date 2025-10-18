@@ -339,6 +339,7 @@ Partial Class playlistWindow
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow
         Me.MinimumSize = New System.Drawing.Size(584, 238)
         Me.Name = "playlistWindow"
+        Me.ShowInTaskbar = False
         Me.StartPosition = System.Windows.Forms.FormStartPosition.Manual
         Me.Text = "Playlist - Untitled"
         Me.menu_Add.ResumeLayout(False)

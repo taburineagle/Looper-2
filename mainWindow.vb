@@ -63,7 +63,6 @@ Public Class mainWindow
     Public disableHotkeys As Boolean = False ' whether or not to disable hotkeys
     Public hotkeysActive As Boolean ' whether hotkeys are active currently or not
 
-    Public dockPlaylistWindow As Boolean = False ' whether or not to dock the playlist to the main window (if it's sized differerntly, then no...)
     Public isQuitting As Boolean = False ' if we are in the process of quitting or not
 
     Dim waitForSecondTick As Integer = -1 ' wait for the 2nd response from MPC-HC to change the speed
@@ -418,13 +417,9 @@ Public Class mainWindow
     End Function
 
     Private Sub mainWindow_Move(sender As Object, e As EventArgs) Handles MyBase.Move
-        If dockPlaylistWindow = True Then ' we're still set to bound the 2 windows together
-            If playlistWindow.Left < Me.Left - 250 Or playlistWindow.Left > Me.Left + 250 Then ' we've strayed away from the "magnet" bounds of the main window
-                dockPlaylistWindow = False ' so un-dock the playlist window and treat it seperately
-            Else ' we're still in bounds, so move the playlist window along with the main window
-                playlistWindow.Left = Me.Left
-                playlistWindow.Top = Me.Top + Me.Height - 6
-            End If
+        If Not (playlistWindow.Left < Me.Left - 200 Or playlistWindow.Left > Me.Left + 200) Then ' we've strayed away from the "magnet" bounds of the main window
+            playlistWindow.Left = Me.Left
+            playlistWindow.Top = Me.Top + Me.Height - 6
         End If
     End Sub
 
@@ -584,15 +579,15 @@ Public Class mainWindow
         Dim startPositionT As String = betweenTheLines(fileReader, "startPositionT=", vbCrLf, "-1") ' the top-most coordinate to open Looper at
         If startPositionL <> "-1" Then Me.Top = CInt(startPositionT)
 
-        Dim startPLPositionL As String = betweenTheLines(fileReader, "startPLPositionL=", vbCrLf, "-1") ' the left-most coordinate to open Looper's playlist at
-        Dim startPLPositionT As String = betweenTheLines(fileReader, "startPLPositionT=", vbCrLf, "-1") ' the top-most coordinate to open Looper playlist at
-        Dim startPLPositionW As String = betweenTheLines(fileReader, "startPLPositionW=", vbCrLf, "-1") ' the width of Looper's playlist - check against min size
-        Dim startPLPositionH As String = betweenTheLines(fileReader, "startPLPositionH=", vbCrLf, "-1") ' the height of Looper's playlist - check against min size
+        Dim startPLPositionL As String = betweenTheLines(fileReader, "startPLPositionL=", vbCrLf, "0") ' the left-most coordinate to open Looper's playlist at
+        Dim startPLPositionT As String = betweenTheLines(fileReader, "startPLPositionT=", vbCrLf, "0") ' the top-most coordinate to open Looper playlist at
+        Dim startPLPositionW As String = betweenTheLines(fileReader, "startPLPositionW=", vbCrLf, "0") ' the width of Looper's playlist - check against min size
+        Dim startPLPositionH As String = betweenTheLines(fileReader, "startPLPositionH=", vbCrLf, "0") ' the height of Looper's playlist - check against min size
 
         Dim hidePlaylistOnLaunch As Boolean
         Boolean.TryParse(betweenTheLines(fileReader, "hidePlaylistOnLaunch=", vbCrLf, "B_False"), hidePlaylistOnLaunch) ' whether or not to show the playlist when Looper opens
 
-        If hidePlaylistOnLaunch = False Then openPlaylistWindow(CInt(startPLPositionL), CInt(startPLPositionT), CInt(startPLPositionW), CInt(startPLPositionH))
+        openPlaylistWindow(CInt(startPLPositionL), CInt(startPLPositionT), CInt(startPLPositionW), CInt(startPLPositionH), hidePlaylistOnLaunch)
 
         Dim loopButtonMode As String = betweenTheLines(fileReader, "loopButtonMode=", vbCrLf, "Loop Mode") ' what the loop button mode should be on launching
         If loopButtonMode = "Off" Then switchToOffMode() ' we're set to be in Looper Mode by default, so no need to switch *back* to it on startup
@@ -973,44 +968,77 @@ Public Class mainWindow
         openPlaylistWindow()
     End Sub
 
-    Public Sub openPlaylistWindow(Optional PLWindowL As Integer = -1,
-                                  Optional PLWindowT As Integer = -1,
-                                  Optional PLWindowW As Integer = -1,
-                                  Optional PLWindowH As Integer = -1)
+    Private Sub togglePlaylistButton_MouseMove(sender As Object, e As MouseEventArgs) Handles togglePlaylistButton.MouseMove
+        If (My.Computer.Keyboard.ShiftKeyDown = True And My.Computer.Keyboard.CtrlKeyDown) Then
+            togglePlaylistButton.Text = "MOVE BACK"
+        End If
+    End Sub
+
+    Private Sub togglePlaylistButton_MouseLeave(sender As Object, e As EventArgs) Handles togglePlaylistButton.MouseLeave
         If playlistWindow.Visible = True Then
+            togglePlaylistButton.Text = "HIDE PLAYLIST"
+        Else
             togglePlaylistButton.Text = "SHOW PLAYLIST"
-            playlistWindow.Hide()
+        End If
+    End Sub
+
+    Public Sub openPlaylistWindow(Optional movePLWindowL As Integer = -1,
+                                  Optional movePLWindowT As Integer = -1,
+                                  Optional movePLWindowW As Integer = -1,
+                                  Optional movePLWindowH As Integer = -1,
+                                  Optional forceHide As Boolean = False)
+
+        Dim forceReset As Boolean = False ' set to True to resize the playlist window to the default size/location, but not hide the window
+
+        ' If you hold CTRL and SHIFT down at the same time while clicking on the SHOW/HIDE BUTTON
+        If (My.Computer.Keyboard.ShiftKeyDown = True And My.Computer.Keyboard.CtrlKeyDown) Then
+            forceReset = True
+            movePLWindowL = 0
+            movePLWindowT = 0
+            movePLWindowW = 0
+            movePLWindowH = 0
+        End If
+
+        If Not movePLWindowL = -1 Then
+            If movePLWindowL = 0 Then
+                playlistWindow.Left = Me.Left ' if we don't specify a value for Left, then open it relative to the main window
+            Else
+                playlistWindow.Left = movePLWindowL ' if we specify a Left value, then open the playlist at this position
+            End If
+        End If
+
+        If Not movePLWindowT = -1 Then
+            If movePLWindowT = 0 Then
+                playlistWindow.Top = Me.Top + Me.Height - 6 ' if we don't specify a value for Top, then open it relative to the main window
+            Else
+                playlistWindow.Top = movePLWindowT ' if we specify a Top value, then open the playlist at this position
+            End If
+        End If
+
+        If Not movePLWindowW = -1 Then
+            If movePLWindowW = 0 Then
+                playlistWindow.Width = Me.Width
+            Else
+                playlistWindow.Width = movePLWindowW ' if there's a value for width, then resize it to this width
+            End If
+        End If
+
+        If Not movePLWindowH = -1 Then
+            If movePLWindowH = 0 Then
+                playlistWindow.Height = 538
+            Else
+                playlistWindow.Height = movePLWindowH ' if there's a value for height, then resize it to this height
+            End If
+        End If
+
+        If forceHide = True Or playlistWindow.Visible = True Then ' force the window closed
+            If forceReset = False Then ' if we're forcing a reset of the window's positions, then don't hide it
+                togglePlaylistButton.Text = "SHOW PLAYLIST"
+                playlistWindow.Hide()
+            End If
         Else
             togglePlaylistButton.Text = "HIDE PLAYLIST"
-
-            If PLWindowL <> -1 Then
-                playlistWindow.Left = PLWindowL ' if we specify a Left value, then open the playlist at this position
-                dockPlaylistWindow = False ' don't dock the main window and playlist windows
-            Else
-                playlistWindow.Left = Me.Left ' if we don't specify a value for Left, then open it relative to the main window
-                dockPlaylistWindow = True ' DO dock the main window and playlist windows
-            End If
-
-            If PLWindowT <> -1 Then
-                playlistWindow.Top = PLWindowT ' if we specify a Top value, then open the playlist at this position
-            Else
-                playlistWindow.Top = Me.Top + Me.Height - 6 ' if we don't specify a value for Top, then open it relative to the main window
-            End If
-
-            If PLWindowW <> -1 Then
-                playlistWindow.Width = PLWindowW ' if there's a value for width, then resize it to this width
-            Else
-                playlistWindow.Width = Me.Width
-            End If
-
-            If PLWindowH <> -1 Then
-                playlistWindow.Height = PLWindowH ' if there's a value for height, then resize it to this height
-            Else
-                playlistWindow.Height = 538
-            End If
-
             playlistWindow.TopMost = Me.TopMost
-
             playlistWindow.Show()
         End If
     End Sub
@@ -1042,6 +1070,15 @@ Public Class mainWindow
     End Sub
 
     Private Sub switchEditingControls(Optional onOrOff As Boolean = True)
+        inTF.Enabled = onOrOff
+        outTF.Enabled = onOrOff
+
+        zoomAxesLinkButton.Enabled = onOrOff
+        xPosTF.Enabled = onOrOff
+        yPosTF.Enabled = onOrOff
+        xZoomTF.Enabled = onOrOff
+        yZoomTF.Enabled = onOrOff
+
         inPointSlipLeftButton.Enabled = onOrOff
         inPointClearButton.Enabled = onOrOff
         inPointButton.Enabled = onOrOff

@@ -181,6 +181,7 @@ Partial Class hotKeySettings
         Me.MinimizeBox = False
         Me.MinimumSize = New System.Drawing.Size(391, 414)
         Me.Name = "hotKeySettings"
+        Me.ShowInTaskbar = False
         Me.Text = "Set Hotkeys"
         Me.TopMost = True
         Me.ResumeLayout(False)
