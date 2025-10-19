@@ -727,6 +727,8 @@
 
             ' replace [F] with the currently playing file's filename
             Dim newEventName As String = Replace(mainWindow.newEventString, "[F]", System.IO.Path.GetFileName(mainWindow.currentPlayingFile))
+            ' replace [f] with the currently playing file's filename (minus the extension)
+            newEventName = Replace(mainWindow.newEventString, "[f]", System.IO.Path.GetFileNameWithoutExtension(mainWindow.currentPlayingFile))
             ' replace [#] with the current # in the events list
             newEventName = Replace(newEventName, "[#]", (eventsList.Items.Count + 1).ToString())
 
